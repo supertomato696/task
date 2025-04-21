@@ -25,11 +25,20 @@ public:
 
 
 public:
-//   std::future<std::vector<nlohmann::json>> listResourcesAsync();
+  std::future<std::vector<nlohmann::json>> listResourcesAsync();
 //   std::future<nlohmann::json> readResourceAsync(const std::string& uri);
 
-       std::future<nlohmann::json> listResourcesAsync();
+    //    std::future<nlohmann::json> listResourcesAsync();
        std::future<nlohmann::json> readResourceAsync(const std::string& uri);
+
+public:
+std::future<std::vector<nlohmann::json>> listToolsAsync(){
+    return asyncRpcCall("tools/list", {}, *this);
+}
+std::future<nlohmann::json> callToolAsync(const std::string& name,const json& args = {}){
+    return asyncRpcCall("tools/call", {{"name",name},{"arguments",args}}, *this);
+}
+
 private:
     nlohmann::json rpcCall(const std::string& method, nlohmann::json params);
     std::future<nlohmann::json> asyncRpcCall(const std::string& method, nlohmann::json params, McpClient& self);

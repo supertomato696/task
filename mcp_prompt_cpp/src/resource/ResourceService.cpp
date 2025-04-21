@@ -5,7 +5,8 @@ using namespace mcp;
 using json = nlohmann::json;
 
 json ResourceService::handle(const json& req){
-    const std::string id     = req.value("id","0");
+    // const std::string id     = req.value("id","0");
+    json id = req["id"];          // 保留类型
     const std::string method = req.at("method");
     const json params = req.value("params", json::object());
 

@@ -26,13 +26,12 @@ std::string MultiModalAssembler::readFileB64(const std::string& path){
 }
 
 static std::string b64(const std::string& bin){
-    std::string out(EVP_EncodeBlock(nullptr, nullptr, 0), '\0'); // size hint
-    unsigned len = 4*((bin.size()+2)/3);
-    out.resize(len);
-    EVP_EncodeBlock(reinterpret_cast<unsigned char*>(&out[0]),
-                    reinterpret_cast<const unsigned char*>(bin.data()),
-                    bin.size());
-    return out;
+        size_t len = 4*((bin.size()+2)/3);
+        std::string out(len, '\0');
+        EVP_EncodeBlock(reinterpret_cast<unsigned char*>(out.data()),
+                        reinterpret_cast<const unsigned char*>(bin.data()),
+                        bin.size());
+        return out;
 }
 
 /* ---------- 工具 --------- */
@@ -65,7 +64,10 @@ PromptMessage MultiModalAssembler::assemble(const std::string& role,const std::s
     /* --- 1. 音频 file:// 直接转 AudioContent --- */
     if(isUri(v) && v.rfind("file://",0)==0 && isAudioExt(v)){
         std::string path = v.substr(7);                 // 去掉 file://
-        std::string ext  = fs::path(path).extension().string().substr(1); // 不带点
+        // std::string ext  = fs::path(path).extension().string().substr(1); // 不带点
+        std::string ext  = fs::path(path).extension().string();
+        if(!ext.empty()&&ext[0]=='.') ext.erase(0,1);
+        std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
         AudioContent ac;
         ac.mimeType = toMime(ext);
         ac.data     = readFileB64(path);

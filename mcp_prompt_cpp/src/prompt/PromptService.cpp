@@ -39,7 +39,8 @@ json PromptService::getPrompt(const std::string& id,const json& params){
     // 1. 模板渲染
     inja::Environment env;
     json context = params.value("arguments", json::object());
-    json rendered = env.render_json(tpl->messages.dump(), context);
+    // json rendered = env.render_json(tpl->messages.dump(), context);
+    json rendered = env.render_json(tpl->messages, context);
 
     // 2. 消息装配 (处理多模态占位符 → Content)
     json msgs = json::array();

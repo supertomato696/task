@@ -1,1 +1,0 @@
-/usr/bin/c++ -I/usr/local/grpc/include -I/usr/local/protobuf/include -I/usr/local/abseil/include -O3 -DNDEBUG CMakeFiles/mcp_promptd.dir/src/server_main.cpp.o -o mcp_promptd  libmcp_core.a -lasio

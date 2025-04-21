@@ -1,6 +1,6 @@
 // src/server_main.cpp
 #include "prompt/PromptService.hpp"
-#incluce "prompt/SqlitePromptStore.hpp"
+#include "prompt/SqlitePromptStore.hpp"
 #include "transport/AsioTcpTransport.hpp"
 #include "resource/ResouceManager.hpp"
 #include <csignal>

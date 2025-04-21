@@ -45,10 +45,31 @@ GetPromptResult McpClient::getPrompt(const std::string& n,const ArgMap& args){
 //    return asyncRpcCall("resources/list", {}, *this);
 //}
 
-std::future<nlohmann::json> McpClient::listResourcesAsync(){
-    return asyncRpcCall("resources/list", {}, *this);
+// std::future<nlohmann::json> McpClient::listResourcesAsync(){
+//     return asyncRpcCall("resources/list", {}, *this)
+//            .then([](auto f){ return f.get()["resources"]
+//                                    .get<std::vector<json>>(); });
+// }
+
+std::future<std::vector<json>> McpClient::listResourcesAsync(){
+    auto prom = std::make_shared<std::promise<std::vector<json>>>();
+    auto fut  = prom->get_future();
+
+    asyncRpcCall("resources/list", {}, *this)
+        .then([prom](std::future<json> f){
+            try{
+                auto vec = f.get()["resources"]
+                             .get<std::vector<json>>();
+                prom->set_value(std::move(vec));
+            }catch(...){
+                prom->set_exception(std::current_exception());
+            }
+        });
+    return fut;
 }
-std::future<nlohmann::json> readResourceAsync(const std::string& uri){
+
+
+std::future<nlohmann::json> McpClient::readResourceAsync(const std::string& uri){
     return asyncRpcCall("resources/read", {{"uri",uri}}, *this);
 }
 
@@ -103,7 +124,22 @@ void McpClient::do_connect(){
             asio::async_connect(*sock_, ep,
                 [this](auto ec, auto){ 
                     if(ec){ std::cerr<<"connect error\n"; return;}
-                    do_read();
+                        /* ---------- MCP initialize ---------- */
+                        json initReq = {
+                            {"jsonrpc","2.0"},
+                            {"id","init-1"},
+                            {"method","initialize"},
+                            {"params",{
+                                {"protocolVersion","2025-03-26"},
+                                {"clientInfo", {{"name","seat-sdk"},{"version","0.1"}}},
+                                {"capabilities",{
+                                    {"prompts",  {}} ,
+                                    {"resources",{}}
+                                }}
+                            }}
+                        };
+                        send_raw(initReq.dump()+"\n");
+                        do_read();
                 });
         });
 }

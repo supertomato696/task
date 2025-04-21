@@ -25,6 +25,11 @@ nlohmann::json ResourceManager::readResource(const std::string& uri){
 /* ---------------- subscribe / polling ---------------- */
 void ResourceManager::subscribe(const std::string& uri, UpdatedCb cb){
     std::scoped_lock lk(sub_mtx_);
+    // if(uri.rfind("file://",0)==0){
+    //     fs::path p(uri.substr(7));
+    //     if(fs::exists(p)) mtime_[uri]=fs::last_write_time(p);
+    // }
+    
     subs_[uri] = std::move(cb);
     if(std::filesystem::exists(uri.substr(7)))
         mtime_[uri] = fs::last_write_time(uri.substr(7));

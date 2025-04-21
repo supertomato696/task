@@ -8,7 +8,9 @@ namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 static std::string base64(const std::string& bin){
-    std::string out; out.resize(4*((bin.size()+2)/3));
+    // std::string out; out.resize(4*((bin.size()+2)/3));
+    size_t len = 4*((bin.size()+2)/3);
+    std::string out(len,'\0');
     EVP_EncodeBlock(reinterpret_cast<unsigned char*>(&out[0]),
                     reinterpret_cast<const unsigned char*>(bin.data()), bin.size());
     return out;
@@ -23,6 +25,7 @@ bool LocalFileResolver::accepts(const std::string& uri) const{
 json LocalFileResolver::read(const std::string& uri){
     std::string path = uri.substr(7);
     fs::path p(path);
+    // 大小写敏感，若文件是 .TXT 会走 blob 路径；建议 tolower。
     bool isText = p.extension()==".txt" || p.extension()==".json" || p.extension()==".md";
 
     std::ifstream f(path, std::ios::binary);
@@ -56,6 +59,7 @@ std::vector<json> LocalFileResolver::list(){
 
 std::string LocalFileResolver::toMime(const fs::path& p){
     auto ext = p.extension().string();
+    std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
     if(ext==".txt") return "text/plain";
     if(ext==".json")return "application/json";
     if(ext==".png") return "image/png";

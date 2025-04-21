@@ -11,7 +11,9 @@ using json = nlohmann::json;
 
 /* ---------- helpers ---------- */
 static std::string b64(const std::string& bin){
-    std::string out; out.resize(4*((bin.size()+2)/3));
+    // std::string out; out.resize(4*((bin.size()+2)/3));
+    size_t len = 4*((bin.size()+2)/3);
+    std::string out(len, '\0');
     EVP_EncodeBlock(reinterpret_cast<unsigned char*>(&out[0]),
                     reinterpret_cast<const unsigned char*>(bin.data()), bin.size());
     return out;
@@ -39,8 +41,9 @@ std::string HttpResolver::sniffMime(const std::string& url,
 
 /* ---------- read ---------- */
 json HttpResolver::read(const std::string& uri){
-    httplib::Client cli(httplib::detail::host_port_pair(uri).first.c_str(),
-                        httplib::detail::host_port_pair(uri).second);
+    // httplib::Client cli(httplib::detail::host_port_pair(uri).first.c_str(),
+    //                     httplib::detail::host_port_pair(uri).second);
+    httplib::Client cli(uri.c_str());
     cli.set_follow_location(true);
 
     auto res = cli.Get(uri.c_str());

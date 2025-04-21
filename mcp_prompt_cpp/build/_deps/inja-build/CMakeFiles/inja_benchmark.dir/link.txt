@@ -1,1 +1,0 @@
-/usr/bin/c++ -I/usr/local/grpc/include -I/usr/local/protobuf/include -I/usr/local/abseil/include -O3 -DNDEBUG CMakeFiles/inja_benchmark.dir/test/benchmark.cpp.o -o inja_benchmark
