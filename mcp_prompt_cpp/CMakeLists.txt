@@ -80,6 +80,11 @@ target_link_libraries(mcp_client
         Threads::Threads
 )
 
+#--------------------------client_main
+add_executable(mcp_client_demo src/client_main.cpp)
+target_link_libraries(mcp_client_demo PRIVATE mcp_client)
+
+
 # ---------------------------------------------------------------------
 # Tests (可选)
 # ---------------------------------------------------------------------
