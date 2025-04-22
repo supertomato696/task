@@ -323,7 +323,7 @@ int main(int /*argc*/, char** /*argv*/)
 
             transport.send(resp);
         }catch(const std::exception& e){
-            transport.send(proto::makeError(proto::parseId(req), -32603, e.what()));
+            transport.send(protocol::makeError(protocol::parseId(req), -32603, e.what()));
         }
     });
 
