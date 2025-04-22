@@ -8,34 +8,37 @@
 #include <nlohmann/json.hpp>
 #include <unordered_map>
 
-namespace mcp {
+namespace mcp::prompt {
 
-struct PromptTemplate {
-    std::string name;
-    std::string description;
-    nlohmann::json messages;   // 原始 JSON 模板 (messages 数组)
-    std::vector<std::string>  arguments;
-};
+// struct PromptTemplate {
+//     std::string name;
+//     std::string description;
+//     nlohmann::json messages;   // 原始 JSON 模板 (messages 数组)
+//     std::vector<std::string>  arguments;
+// };
 
-class PromptStore {
-public:
-    // 内存版本
-    void add(const PromptTemplate& t){ store_[t.name]=t; }
-    const PromptTemplate* find(const std::string& n) const {
-        auto it = store_.find(n); return it==store_.end()?nullptr:&it->second;
-    }
-    std::vector<PromptTemplate> all() const {
-        std::vector<PromptTemplate> v; for(auto&[_,p]:store_) v.push_back(p); return v;
-    }
-private: std::unordered_map<std::string,PromptTemplate> store_;
-};
+// class PromptStore {
+// public:
+//     // 内存版本
+//    virtual  void add(const PromptTemplate& t) { store_[t.name]=t; }
+//    virtual  const PromptTemplate* find(const std::string& n) const {
+//         auto it = store_.find(n); return it==store_.end()?nullptr:&it->second;
+//     }
+//    virtual  std::vector<PromptTemplate> all() const {
+//         std::vector<PromptTemplate> v;
+//         for(auto&[_,p]:store_) v.push_back(p); return v;
+//     }
+//
+//     virtual ~PromptStore() = default;
+// private: std::unordered_map<std::string,PromptTemplate> store_;
+// };
 
 
 
 /* -------- JSON‑RPC Handler -------- */
 class PromptService {
 public:
-    explicit PromptService(PromptStore& st):store_(st){}
+    explicit PromptService(IPromptStore& st):store_(st){}
 //    explicit PromptService(PromptStore& store);
 
     /** 输入 JSON‑RPC request (2.0) → 返回 response/result */
@@ -50,10 +53,10 @@ private:
 
 
 private:
-     lohmann::json listPrompts(const std::string& id,const nlohmann::json& params);
+     nlohmann::json listPrompts(const std::string& id,const nlohmann::json& params);
     nlohmann::json getPrompt (const std::string& id,const nlohmann::json& params);
 
-    PromptStore&           store_;
+    IPromptStore&           store_;
     TemplateEngine         tpl_;
     MultiModalAssembler    mma_;
 };

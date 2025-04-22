@@ -1,11 +1,11 @@
 #pragma once
-#include "prompt/PromptService.hpp"          // 复用 PromptTemplate
+#include "prompt/PromptStore.hpp"          // 复用 PromptTemplate
 #include <sqlite_modern_cpp.h>
 #include <mutex>
 
-namespace mcp {
+namespace mcp::prompt {
 
-class SqlitePromptStore : public PromptStore {
+class SqlitePromptStore : public IPromptStore {
 public:
     /** dbPath: e.g. "/var/lib/mcp/prompts.db" */
     explicit SqlitePromptStore(const std::string& dbPath);

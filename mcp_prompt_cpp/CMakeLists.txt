@@ -34,12 +34,17 @@ add_library(mcp_core
         src/transport/AsioTcpTransport.cpp
         src/prompt/MultiModalAssembler.cpp
         src/prompt/PromptService.cpp
+        src/prompt/SqlitePromptStore.cpp
+        src/protocol/InitializeService.cpp
         src/resource/ResourceManager.cpp
+        src/resource/ResourceService.cpp
         src/resource/resolvers/LocalFileResolver.cpp
         src/resource/resolvers/HttpResolver.cpp
         src/tools/ToolRegistry.cpp
         src/tools/ToolService.cpp
         src/tools/DemoTools.cpp
+
+
 )
 
 target_include_directories(mcp_core PUBLIC include)

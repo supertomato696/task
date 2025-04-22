@@ -1,7 +1,7 @@
 // src/resource/ResourceService.cpp
 #include "resource/ResourceService.hpp"
 
-using namespace mcp;
+using namespace mcp::resource;
 using json = nlohmann::json;
 
 json ResourceService::handle(const json& req){

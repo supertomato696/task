@@ -25,7 +25,7 @@ std::string MultiModalAssembler::readFileB64(const std::string& path){
     return b64(bin);
 }
 
-static std::string b64(const std::string& bin){
+std::string MultiModalAssembler::b64(const std::string& bin){
         size_t len = 4*((bin.size()+2)/3);
         std::string out(len, '\0');
         EVP_EncodeBlock(reinterpret_cast<unsigned char*>(out.data()),
@@ -57,9 +57,9 @@ std::string MultiModalAssembler::toMime(const std::string& ext){
 }
 
 /* ---------- assemble 主逻辑 --------- */
-PromptMessage MultiModalAssembler::assemble(const std::string& role,const std::string& v)
+protocol::PromptMessage MultiModalAssembler::assemble(const std::string& role,const std::string& v)
 {
-    PromptMessage msg; msg.role = role;
+    protocol::PromptMessage msg; msg.role = role;
 
     /* --- 1. 音频 file:// 直接转 AudioContent --- */
     if(isUri(v) && v.rfind("file://",0)==0 && isAudioExt(v)){
@@ -68,10 +68,10 @@ PromptMessage MultiModalAssembler::assemble(const std::string& role,const std::s
         std::string ext  = fs::path(path).extension().string();
         if(!ext.empty()&&ext[0]=='.') ext.erase(0,1);
         std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
-        AudioContent ac;
+        protocol::AudioContent ac;
         ac.mimeType = toMime(ext);
         ac.data     = readFileB64(path);
-        msg.tag     = ContentTag::Audio;
+        msg.tag     = protocol::ContentTag::Audio;
         msg.content = ac;
         return msg;
     }
@@ -79,10 +79,10 @@ PromptMessage MultiModalAssembler::assemble(const std::string& role,const std::s
     /* --- 2. data:image/… --- */
     if(isImageDataUri(v)){
         size_t semi = v.find(';');
-        ImageContent ic;
+        protocol::ImageContent ic;
         ic.mimeType = v.substr(5, semi-5);              // image/xxx
         ic.data     = v.substr(v.find(',')+1);
-        msg.tag     = ContentTag::Image;
+        msg.tag     = protocol::ContentTag::Image;
         msg.content = ic;
         return msg;
     }
@@ -91,20 +91,20 @@ PromptMessage MultiModalAssembler::assemble(const std::string& role,const std::s
     if(isUri(v) && v.rfind("file://",0)==0){
         std::string path = v.substr(7);
         std::string ext  = fs::path(path).extension().string().substr(1);
-        EmbeddedResource er;
+        protocol::EmbeddedResource er;
         er.resource = {
             {"uri", v},
             {"mimeType", toMime(ext)},
             {"blob", readFileB64(path)}
         };
-        msg.tag     = ContentTag::Resource;
+        msg.tag     = protocol::ContentTag::Resource;
         msg.content = er;
         return msg;
     }
 
     /* --- 4. 默认文本 --- */
-    TextContent tc{ v, {} };
-    msg.tag     = ContentTag::Text;
+    protocol::TextContent tc{ v, {} };
+    msg.tag     = protocol::ContentTag::Text;
     msg.content = tc;
     return msg;
 }

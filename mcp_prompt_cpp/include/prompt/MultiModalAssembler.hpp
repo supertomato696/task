@@ -1,9 +1,9 @@
 // include/prompt/MultiModalAssembler.hpp
 #pragma once
-#include "protocol/McpTypes.hpp"
+#include "protocol/McpContent.hpp"
 #include <vector>
 #include <string>
-#include "protocol/McpContent.hpp"
+
 
 namespace mcp {
 
@@ -23,8 +23,9 @@ public:
     static bool isAudioExt(const std::string& p);        // ★ 新增
     static bool isImageDataUri(const std::string& v);
     static std::string toMime(const std::string& ext);
+    static std::string b64(const std::string& bin);
 
-    std::string readFileB64(const std::string& path);    // 统一 base64
+    static std::string readFileB64(const std::string& path);    // 统一 base64
 
   private:
     protocol::PromptMessage makeText (const std::string&);

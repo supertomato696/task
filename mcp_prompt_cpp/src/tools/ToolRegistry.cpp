@@ -8,7 +8,7 @@ void ToolRegistry::registerTool(std::string n, ToolDef d){
     map_.emplace(std::move(n), std::move(d));
 }
 
-std::vector<json> ToolRegistry::listTools() const{
+std::vector<json> ToolRegistry::listTools() const {
     std::vector<json> v;
     for(auto& [name,def]: map_){
         v.push_back({
@@ -25,6 +25,6 @@ ToolReply ToolRegistry::invoke(const std::string& n,const ToolArgs& a) const{
     if(it==map_.end()) throw std::runtime_error("tool not found");
     return it->second.callback(a);
 }
-```
+
 
 // （为简洁，未做 JSON‑Schema 校验；如需可接入 [vocab/json‑schema‑validator](https://github.com/pboettch/json-schema-validator) ）

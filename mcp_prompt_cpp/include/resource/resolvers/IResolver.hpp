@@ -18,7 +18,7 @@ public:
 
     /** 枚举根目录下可列举资源；非文件型 resolver 返回空 */
     virtual std::vector<nlohmann::json> list() { return {}; }
-    virtual ~IResolver() = default;
+
 };
 
 } // namespace mcp::resource

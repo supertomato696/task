@@ -2,7 +2,7 @@
 #include "resource/ResourceManager.hpp"
 #include <nlohmann/json.hpp>
 
-namespace mcp {
+namespace mcp::resource {
 
 class ResourceService {
 public:

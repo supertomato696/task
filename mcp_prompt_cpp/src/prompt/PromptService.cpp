@@ -2,7 +2,7 @@
 #include "prompt/PromptService.hpp"
 #include <inja/inja.hpp>
 
-using namespace mcp;
+using namespace mcp::prompt;
 using nlohmann::json;
 
 static json make_error(const std::string& id,int code,const std::string& msg){
@@ -40,7 +40,9 @@ json PromptService::getPrompt(const std::string& id,const json& params){
     inja::Environment env;
     json context = params.value("arguments", json::object());
     // json rendered = env.render_json(tpl->messages.dump(), context);
-    json rendered = env.render_json(tpl->messages, context);
+    // json rendered = env.render_json(tpl->messages, context);
+
+    json rendered = tpl_.renderJson(tpl->messages, context);
 
     // 2. 消息装配 (处理多模态占位符 → Content)
     json msgs = json::array();

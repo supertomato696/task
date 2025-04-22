@@ -1,7 +1,7 @@
 #include "prompt/SqlitePromptStore.hpp"
 #include <inja/inja.hpp>    // 仅用于 json → string dump (messages)
 
-using namespace mcp;
+using namespace mcp::prompt;
 
 SqlitePromptStore::SqlitePromptStore(const std::string& path)
 : db_(path)

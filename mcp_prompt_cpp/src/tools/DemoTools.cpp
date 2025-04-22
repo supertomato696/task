@@ -1,8 +1,9 @@
 #include "tools/ToolRegistry.hpp"
+#include "tools/DemoTools.hpp"
 #include <fstream>
-
-using namespace mcp::tools;
 using json = nlohmann::json;
+namespace mcp::tools {
+
 
 /* ---- say_text: {"text": string} → assistant TextContent ---- */
 static ToolReply say_text(const ToolArgs& a){
@@ -42,4 +43,6 @@ void registerDemoTools(ToolRegistry& reg){
         "返回车辆状态 JSON",
         &car_info
     });
+}
+
 }
