@@ -19,6 +19,7 @@
 #include <iostream>
 #include <iomanip>
 #include <csignal>
+#include <variant>
 
 int main()
 {

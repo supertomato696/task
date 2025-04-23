@@ -5,7 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
-// #include <jthread>
+
 #include <atomic>
 
 namespace mcp::client {
@@ -13,14 +13,15 @@ namespace mcp::client {
 /** 简单阻塞式 Client：每次请求同步等待响应；连接断掉自动重连 */
 class McpClient {
 public:
+
     /** host 可为 "127.0.0.1", port 9275 */
     McpClient(std::string host, uint16_t port);
     ~McpClient();
 
-    std::vector<PromptInfo>   listPrompts();
+    std::vector<Prompt>   listPrompts();
     GetPromptResult           getPrompt(const std::string& name, const ArgMap& args = {});
 public:
-   std::future<std::vector<PromptInfo>> listPromptsAsync();
+   std::future<std::vector<Prompt>> listPromptsAsync();
    std::future<GetPromptResult>         getPromptAsync(const std::string& name, const ArgMap& args = {});
 
 

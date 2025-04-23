@@ -18,11 +18,11 @@ McpClient::~McpClient(){
 }
 
 /* ---------- public RPC wrappers ---------- */
-std::vector<PromptInfo> McpClient::listPrompts(){
+std::vector<Prompt> McpClient::listPrompts(){
     json res = rpcCall("prompts/list", {} )["prompts"];
-    std::vector<PromptInfo> out;
+    std::vector<Prompt> out;
     for(auto& p: res){
-        PromptInfo pi;
+        Prompt pi;
         pi.name        = p["name"];
         pi.description = p.value("description", "");
         pi.arguments   = p.value("arguments", std::vector<std::string>{});
