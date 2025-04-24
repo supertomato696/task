@@ -159,6 +159,7 @@ struct TextContent {
 };
 
 struct ImageContent {
+    std::string type{"image"};
     std::string data;        // [必填] base64
     std::string mimeType;    // [必填]
     std::optional<Annotations> annotations;
@@ -166,10 +167,7 @@ struct ImageContent {
 
 
 inline void to_json(nlohmann::json& j, const TextContent& t) {
-    j = {
-        {"type", "text"},
-        {"text", t.text}
-    };
+    j = json{{"type", "text"}, {"text", t.text}};
     if (t.annotations) {
         j["annotations"] = *t.annotations;
     }
@@ -177,7 +175,7 @@ inline void to_json(nlohmann::json& j, const TextContent& t) {
 
 inline void from_json(const nlohmann::json& j, TextContent& t) {
     // j.at("type").get_to<std::string>(); // 验证 type 字段
-    j.at("text").get_to(t.text);
+        t.text = j.at("text").get<std::string>();
     if (j.contains("annotations")) {
         j.at("annotations").get_to(t.annotations.emplace());
     }
