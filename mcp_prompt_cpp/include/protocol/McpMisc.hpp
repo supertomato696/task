@@ -13,6 +13,7 @@
 #include "McpRootsAndLoggingRequests.hpp"
 #include "McpJsonRpc.hpp"
 #include "McpCapabilities.hpp"
+#include "McpContent.hpp"
 
 using json = nlohmann::json;
 
