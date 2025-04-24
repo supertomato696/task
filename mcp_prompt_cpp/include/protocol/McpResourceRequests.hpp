@@ -5,9 +5,10 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 #include "McpContent.hpp"  // 提前定义 Resource, ResourceContents 等
-
+//#include "McpPromptRequests.hpp"
 using json = nlohmann::json;
 
+namespace mcp::protocol {
 // ===== ListResourcesRequest / ListResourcesResult =====
 
 struct ListResourcesRequest {
@@ -97,97 +98,6 @@ inline void from_json(const json& j, ReadResourceResult& r) {
 
 
 
-#pragma once
-
-#include <string>
-#include <vector>
-#include <optional>
-#include <nlohmann/json.hpp>
-#include "McpContent.hpp"  // 提前定义 Resource, ResourceContents, ResourceTemplate 等
-
-using json = nlohmann::json;
-
-// ===== ListResourcesRequest / ListResourcesResult =====
-
-struct ListResourcesRequest {
-    std::string method = "resources/list";
-    struct Params {
-        std::optional<std::string> cursor;
-    } params;
-};
-
-inline void to_json(json& j, const ListResourcesRequest::Params& p) {
-    j = json{};
-    if (p.cursor) j["cursor"] = *p.cursor;
-}
-
-inline void from_json(const json& j, ListResourcesRequest::Params& p) {
-    if (j.contains("cursor")) j.at("cursor").get_to(p.cursor);
-}
-
-inline void to_json(json& j, const ListResourcesRequest& r) {
-    j = json{{"method", r.method}, {"params", r.params}};
-}
-inline void from_json(const json& j, ListResourcesRequest& r) {
-    j.at("params").get_to(r.params);
-}
-
-struct ListResourcesResult {
-    std::optional<json> _meta;
-    std::optional<std::string> nextCursor;
-    std::vector<Resource> resources;
-};
-
-inline void to_json(json& j, const ListResourcesResult& r) {
-    j = json{};
-    if (r._meta)      j["_meta"]      = *r._meta;
-    if (r.nextCursor) j["nextCursor"] = *r.nextCursor;
-    j["resources"]  = r.resources;
-}
-inline void from_json(const json& j, ListResourcesResult& r) {
-    if (j.contains("_meta"))      j.at("_meta").get_to(r._meta);
-    if (j.contains("nextCursor")) j.at("nextCursor").get_to(r.nextCursor);
-    j.at("resources").get_to(r.resources);
-}
-
-
-// ===== ReadResourceRequest / ReadResourceResult =====
-
-struct ReadResourceRequest {
-    std::string method = "resources/read";
-    struct Params {
-        std::string uri;
-    } params;
-};
-
-inline void to_json(json& j, const ReadResourceRequest::Params& p) {
-    j = json{{"uri", p.uri}};
-}
-inline void from_json(const json& j, ReadResourceRequest::Params& p) {
-    j.at("uri").get_to(p.uri);
-}
-
-inline void to_json(json& j, const ReadResourceRequest& r) {
-    j = json{{"method", r.method}, {"params", r.params}};
-}
-inline void from_json(const json& j, ReadResourceRequest& r) {
-    j.at("params").get_to(r.params);
-}
-
-struct ReadResourceResult {
-    std::optional<json> _meta;
-    std::vector<ResourceContents> contents;
-};
-
-inline void to_json(json& j, const ReadResourceResult& r) {
-    j = json{};
-    if (r._meta)     j["_meta"]    = *r._meta;
-    j["contents"]   = r.contents;
-}
-inline void from_json(const json& j, ReadResourceResult& r) {
-    if (j.contains("_meta")) j.at("_meta").get_to(r._meta);
-    j.at("contents").get_to(r.contents);
-}
 
 
 // ===== ListResourceTemplatesRequest / ListResourceTemplatesResult =====
@@ -281,4 +191,6 @@ inline void to_json(json& j, const ResourceUpdatedNotification& n) {
 }
 inline void from_json(const json& j, ResourceUpdatedNotification& n) {
     j.at("params").at("uri").get_to(n.params.uri);
+}
+
 }

@@ -6,9 +6,10 @@
 #include <variant>
 #include <nlohmann/json.hpp>
 #include "McpContent.hpp"  // 包含 PromptReference, ResourceReference 等
-
+#include "McpPromptRequests.hpp"
 using json = nlohmann::json;
 
+namespace mcp::protocol {
 // ===== ResourceReference =====
 // 引用一个资源（或资源模板）
 struct ResourceReference {
@@ -90,6 +91,14 @@ inline void from_json(const json& j, CompleteResult& r) {
     if (j.contains("_meta")) j.at("_meta").get_to(r._meta);
     auto c = j.at("completion");
     c.at("values").get_to(r.completion.values);
-    if (c.contains("hasMore")) c.at("hasMore").get_to(r.completion.hasMore);
-    if (c.contains("total"))   c.at("total").get_to(r.completion.total);
+        if (c.contains("hasMore")) {
+        r.completion.hasMore = c.at("hasMore").get<bool>(); // 显式处理optional<bool>
+    }
+    if (c.contains("total")) {
+        r.completion.total = c.at("total").get<int>(); // 显式处理optional<int>
+    }
+//    if (c.contains("hasMore")) c.at("hasMore").get_to(r.completion.hasMore);
+//    if (c.contains("total"))   c.at("total").get_to(r.completion.total);
+}
+
 }

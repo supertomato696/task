@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 #include "McpContent.hpp"  // 提前定义 TextContent, ImageContent, AudioContent, EmbeddedResource
 
+namespace mcp::protocol {
 using json = nlohmann::json;
 
 // ===== ToolAnnotations =====
@@ -28,11 +29,21 @@ inline void to_json(json& j, const ToolAnnotations& t) {
 }
 
 inline void from_json(const json& j, ToolAnnotations& t) {
-    if (j.contains("destructiveHint")) j.at("destructiveHint").get_to(t.destructiveHint);
-    if (j.contains("idempotentHint"))  j.at("idempotentHint").get_to(t.idempotentHint);
-    if (j.contains("openWorldHint"))   j.at("openWorldHint").get_to(t.openWorldHint);
-    if (j.contains("readOnlyHint"))    j.at("readOnlyHint").get_to(t.readOnlyHint);
-    if (j.contains("title"))           j.at("title").get_to(t.title);
+    if (j.contains("destructiveHint") && !j["destructiveHint"].is_null()) {
+        t.destructiveHint = j["destructiveHint"].get<bool>();  // 直接从 JSON 中提取 bool 值
+    }
+    if (j.contains("idempotentHint") && !j["idempotentHint"].is_null()) {
+        t.idempotentHint = j["idempotentHint"].get<bool>();  // 同上
+    }
+    if (j.contains("openWorldHint") && !j["openWorldHint"].is_null()) {
+        t.openWorldHint = j["openWorldHint"].get<bool>();  // 同上
+    }
+    if (j.contains("readOnlyHint") && !j["readOnlyHint"].is_null()) {
+        t.readOnlyHint = j["readOnlyHint"].get<bool>();  // 同上
+    }
+    if (j.contains("title") && !j["title"].is_null()) {
+        t.title = j["title"].get<std::string>();  // 处理 title 字段
+    }
 }
 
 // ===== Tool =====
@@ -53,8 +64,15 @@ inline void to_json(json& j, const Tool& t) {
 inline void from_json(const json& j, Tool& t) {
     j.at("name").get_to(t.name);
     j.at("inputSchema").get_to(t.inputSchema);
-    if (j.contains("description")) j.at("description").get_to(t.description);
-    if (j.contains("annotations")) j.at("annotations").get_to(t.annotations);
+   // 手动处理 description 字段，检查是否存在且不为 null
+    if (j.contains("description") && !j["description"].is_null()) {
+        t.description = j["description"].get<std::string>();
+    }
+
+    // 手动处理 annotations 字段，检查是否存在且不为 null
+    if (j.contains("annotations") && !j["annotations"].is_null()) {
+        t.annotations = j["annotations"].get<ToolAnnotations>();  // 从 JSON 提取 ToolAnnotations
+    }
 }
 
 // ===== ListToolsRequest / ListToolsResult =====
@@ -143,8 +161,10 @@ inline void from_json(const json& j, CallToolResult& r) {
         else if (type == "audio")   r.content.emplace_back(elem.get<AudioContent>());
         else if (type == "resource")r.content.emplace_back(elem.get<EmbeddedResource>());
     }
-    if (j.contains("isError")) j.at("isError").get_to(r.isError);
-}
+    if (j.contains("isError") && !j["isError"].is_null()) {
+        r.isError = j["isError"].get<bool>();
+	}
+ }
 
 // ===== ToolListChangedNotification =====
 struct ToolListChangedNotification {
@@ -160,4 +180,6 @@ inline void to_json(json& j, const ToolListChangedNotification& n) {
 inline void from_json(const json& j, ToolListChangedNotification& n) {
     if (j.contains("params") && j["params"].contains("_meta"))
         j["params"].at("_meta").get_to(n._meta);
+}
+
 }

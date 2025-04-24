@@ -5,11 +5,13 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 #include "McpContent.hpp"  // 包含 Annotations
+//#include "McpMisc.hpp"
 
 using json = nlohmann::json;
 
+namespace mcp::protocol {
 // ===== 根列表 =====
-// Root: 根 URI，客户端提供的可操作目录或文件
+
 struct Root {
     std::string uri;
     std::optional<std::string> name;
@@ -77,10 +79,34 @@ inline void from_json(const json& j, RootsListChangedNotification& n) {
 }
 
 // ===== 日志等级设置 =====
+
+// ===== LoggingLevel =====
+enum class LoggingLevel {
+    alert,
+    critical,
+    debug,
+    emergency,
+    error,
+    info,
+    notice,
+    warning
+};
+
+NLOHMANN_JSON_SERIALIZE_ENUM(LoggingLevel, {
+    {LoggingLevel::alert, "alert"},
+    {LoggingLevel::critical, "critical"},
+    {LoggingLevel::debug, "debug"},
+    {LoggingLevel::emergency, "emergency"},
+    {LoggingLevel::error, "error"},
+    {LoggingLevel::info, "info"},
+    {LoggingLevel::notice, "notice"},
+    {LoggingLevel::warning, "warning"}
+})
+
 // SetLevelRequest
 struct SetLevelRequest {
     std::string method = "logging/setLevel";
-    struct Params { std::string level; } params;
+    struct Params { LoggingLevel level; } params;
 };
 inline void to_json(json& j, const SetLevelRequest::Params& p) {
     j = json{{"level", p.level}};
@@ -100,7 +126,7 @@ struct LoggingMessageNotification {
     std::string method = "notifications/message";
     struct Params {
         std::variant<std::string, json> data;
-        std::string level;
+        LoggingLevel level;
         std::optional<std::string> logger;
     } params;
 };
@@ -108,7 +134,9 @@ struct LoggingMessageNotification {
 inline void to_json(json& j, const LoggingMessageNotification::Params& p) {
     j = json{{"level", p.level}};
     // data 为任意 JSON
-    j["data"] = p.data;
+    std::visit([&j](const auto& val) {
+        j["data"] = val;
+    }, p.data);
     if (p.logger) j["logger"] = *p.logger;
 }
 inline void from_json(const json& j, LoggingMessageNotification::Params& p) {
@@ -142,8 +170,21 @@ inline void to_json(json& j, const ProgressNotification::Params& p) {
 inline void from_json(const json& j, ProgressNotification::Params& p) {
     j.at("progressToken").get_to(p.progressToken);
     j.at("progress").get_to(p.progress);
-    if (j.contains("total"))   j.at("total").get_to(p.total);
-    if (j.contains("message")) j.at("message").get_to(p.message);
+
+    // 处理 optional 类型
+    if (j.contains("total") && !j["total"].is_null()) {
+//        j.at("total").get_to(p.total);
+        p.total = j["total"].get<double>();
+//        j.value("total", std::nullopt).get_to(p.total);
+    } else {
+        p.total = std::nullopt;  // 如果没有 total 字段或它为 null，设置为 nullopt
+    }
+
+    if (j.contains("message") && !j["message"].is_null()) {
+        j.at("message").get_to(p.message);
+    } else {
+        p.message = std::nullopt;  // 如果没有 message 字段或它为 null，设置为 nullopt
+    }
 }
 inline void to_json(json& j, const ProgressNotification& n) {
     j = json{{"method", n.method}, {"params", n.params}};
@@ -162,7 +203,10 @@ struct CancelledNotification {
 };
 
 inline void to_json(json& j, const CancelledNotification::Params& p) {
-    j = json{{"requestId", p.requestId}};
+//    j = json{{"requestId", p.requestId}};
+    std::visit([&j](const auto& val) {
+        j["requestId"] = val;
+    }, p.requestId);
     if (p.reason) j["reason"] = *p.reason;
 }
 inline void from_json(const json& j, CancelledNotification::Params& p) {
@@ -193,4 +237,6 @@ inline void from_json(const json& j, InitializedNotification& n) {
     if (j.contains("params") && j["params"].contains("_meta")) {
         j["params"].at("_meta").get_to(n._meta);
     }
+}
+
 }

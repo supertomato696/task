@@ -8,6 +8,9 @@
 
 using json = nlohmann::json;
 
+namespace mcp::protocol {
+
+    
 // ===== JSON-RPC Error Object =====
 struct JSONRPCError {
     int code;
@@ -101,6 +104,51 @@ inline void from_json(const json& j, JSONRPCErrorResponse& r) {
 }
 
 // ===== JSON-RPC Batch =====
-using JSONRPCBatchRequest  = std::vector<json>;  // array of JSONRPCRequest or JSONRPCNotification
-using JSONRPCBatchResponse = std::vector<json>;  // array of JSONRPCResponse or JSONRPCErrorResponse
 
+
+// ===== JSON-RPC Batch Types =====
+
+// Batch request: array of Request or Notification
+using JSONRPCBatchRequest  = std::vector<std::variant<JSONRPCRequest, JSONRPCNotification>>;
+// Batch response: array of Response or ErrorResponse
+using JSONRPCBatchResponse = std::vector<std::variant<JSONRPCResponse, JSONRPCErrorResponse>>;
+
+inline void to_json(json& j, const JSONRPCBatchRequest& batch) {
+    j = json::array();
+    for (const auto& msg : batch) {
+        std::visit([&j](auto&& arg){ j.push_back(arg); }, msg);
+    }
+}
+
+inline void from_json(const json& j, JSONRPCBatchRequest& batch) {
+    for (const auto& elem : j) {
+        if (elem.contains("jsonrpc") && elem.contains("method")) {
+            if (elem.contains("id")) {
+                batch.emplace_back(elem.get<JSONRPCRequest>());
+            } else {
+                batch.emplace_back(elem.get<JSONRPCNotification>());
+            }
+        }
+    }
+}
+
+inline void to_json(json& j, const JSONRPCBatchResponse& batch) {
+    j = json::array();
+    for (const auto& msg : batch) {
+        std::visit([&j](auto&& arg){ j.push_back(arg); }, msg);
+    }
+}
+
+inline void from_json(const json& j, JSONRPCBatchResponse& batch) {
+    for (const auto& elem : j) {
+        if (elem.contains("jsonrpc") && elem.contains("id")) {
+            if (elem.contains("result")) {
+                batch.emplace_back(elem.get<JSONRPCResponse>());
+            } else if (elem.contains("error")) {
+                batch.emplace_back(elem.get<JSONRPCErrorResponse>());
+            }
+        }
+    }
+}
+
+}

@@ -8,31 +8,12 @@
 #include <nlohmann/json.hpp>
 #include "McpRootsAndLoggingRequests.hpp"  // CancelledNotification, InitializedNotification, ProgressNotification, RootsListChangedNotification
 #include "McpJsonRpc.hpp"               // JSONRPC* types
+//#include "McpRootsAndLoggingRequests.hpp"
 
 using json = nlohmann::json;
 
-// ===== LoggingLevel =====
-enum class LoggingLevel {
-    alert,
-    critical,
-    debug,
-    emergency,
-    error,
-    info,
-    notice,
-    warning
-};
+namespace mcp::protocol {
 
-NLOHMANN_JSON_SERIALIZE_ENUM(LoggingLevel, {
-    {LoggingLevel::alert, "alert"},
-    {LoggingLevel::critical, "critical"},
-    {LoggingLevel::debug, "debug"},
-    {LoggingLevel::emergency, "emergency"},
-    {LoggingLevel::error, "error"},
-    {LoggingLevel::info, "info"},
-    {LoggingLevel::notice, "notice"},
-    {LoggingLevel::warning, "warning"}
-})
 
 // ===== ClientCapabilities =====
 struct ClientCapabilities {
@@ -56,11 +37,21 @@ inline void to_json(json& j, const ClientCapabilities& c) {
 }
 
 inline void from_json(const json& j, ClientCapabilities& c) {
-    if (j.contains("experimental")) j.at("experimental").get_to(c.experimental);
-    if (j.contains("roots")) {
-        c.roots = Roots{};
+    if (j.contains("experimental") && !j["experimental"].is_null()){
+      c.experimental = j.at("experimental").get<std::map<std::string, json>>();
+      }
+//    if (j.contains("roots")) {
+//        c.roots = ClientCapabilities::Roots{};
+//        const auto& r = j["roots"];
+//        if (r.contains("listChanged")) r.at("listChanged").get_to(c.roots->listChanged);
+//    }
+          if (j.contains("roots")) {
+        c.roots = ClientCapabilities::Roots{};
         const auto& r = j["roots"];
-        if (r.contains("listChanged")) r.at("listChanged").get_to(c.roots->listChanged);
+        if (r.contains("listChanged")) {
+            // 显式处理optional<bool>
+            c.roots->listChanged = r.at("listChanged").get<bool>();
+        }
     }
     if (j.contains("sampling")) j.at("sampling").get_to(c.sampling);
 }
@@ -116,4 +107,6 @@ inline void from_json(const json& j, JSONRPCMessage& m) {
     else if (j.contains("method"))                          m = j.get<JSONRPCNotification>();
     else if (j.contains("result") && j.contains("id"))    m = j.get<JSONRPCResponse>();
     else if (j.contains("error")  && j.contains("id"))    m = j.get<JSONRPCErrorResponse>();
+}
+
 }

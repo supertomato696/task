@@ -71,7 +71,7 @@ protocol::PromptMessage MultiModalAssembler::assemble(const std::string& role,co
         protocol::AudioContent ac;
         ac.mimeType = toMime(ext);
         ac.data     = readFileB64(path);
-        msg.tag     = protocol::ContentTag::Audio;
+        // msg.tag     = protocol::ContentTag::Audio;
         msg.content = ac;
         return msg;
     }
@@ -82,7 +82,7 @@ protocol::PromptMessage MultiModalAssembler::assemble(const std::string& role,co
         protocol::ImageContent ic;
         ic.mimeType = v.substr(5, semi-5);              // image/xxx
         ic.data     = v.substr(v.find(',')+1);
-        msg.tag     = protocol::ContentTag::Image;
+        // msg.tag     = protocol::ContentTag::Image;
         msg.content = ic;
         return msg;
     }
@@ -97,14 +97,14 @@ protocol::PromptMessage MultiModalAssembler::assemble(const std::string& role,co
             {"mimeType", toMime(ext)},
             {"blob", readFileB64(path)}
         };
-        msg.tag     = protocol::ContentTag::Resource;
+        // msg.tag     = protocol::ContentTag::Resource;
         msg.content = er;
         return msg;
     }
 
     /* --- 4. 默认文本 --- */
     protocol::TextContent tc{ v, {} };
-    msg.tag     = protocol::ContentTag::Text;
+    // msg.tag     = protocol::ContentTag::Text;
     msg.content = tc;
     return msg;
 }

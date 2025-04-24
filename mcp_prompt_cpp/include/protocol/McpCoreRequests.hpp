@@ -8,6 +8,7 @@
 
 using json = nlohmann::json;
 
+namespace mcp::protocol {
 // ===== Implementation =====
 // MCP 协议中的实现元信息
 struct Implementation {
@@ -56,7 +57,7 @@ inline void from_json(const json& j, InitializeRequest& r) {
 struct InitializeResult {
     std::optional<json> _meta;
     std::string protocolVersion;
-    json capabilities;           // 服务器能力
+    json capabilities;           // #/definitions/ServerCapabilities" 服务器能力
     Implementation serverInfo;
     std::optional<std::string> instructions;
 };
@@ -130,10 +131,17 @@ inline void from_json(const json& j, CreateMessageRequest::Params& p) {
     j.at("messages").get_to(p.messages);
     if (j.contains("metadata"))         j.at("metadata").get_to(p.metadata);
     if (j.contains("modelPreferences")) j.at("modelPreferences").get_to(p.modelPreferences);
-    if (j.contains("stopSequences"))    j.at("stopSequences").get_to(p.stopSequences);
+    if (j.contains("stopSequences") && !j.at("stopSequences").is_null())   {
+      p.stopSequences = j.at("stopSequences").get<std::vector<std::string>>();
+     }
+
     if (j.contains("systemPrompt"))     j.at("systemPrompt").get_to(p.systemPrompt);
-    if (j.contains("temperature"))      j.at("temperature").get_to(p.temperature);
+    if (j.contains("temperature") && !j.at("temperature").is_null())   {
+      p.temperature = j.at("temperature").get<double>();
+      }
 }
+
+
 inline void to_json(json& j, const CreateMessageRequest& r) {
     j = json{{"method", r.method}, {"params", r.params}};
 }
@@ -167,4 +175,6 @@ inline void from_json(const json& j, CreateMessageResult& r) {
     j.at("model").get_to(r.model);
     j.at("role").get_to(r.role);
     if (j.contains("stopReason")) j.at("stopReason").get_to(r.stopReason);
+}
+
 }

@@ -15,8 +15,29 @@
 #include "McpCapabilities.hpp"
 #include "McpContent.hpp"
 
+
+
 using json = nlohmann::json;
 
+
+
+//namespace nlohmann {
+//template <>
+//struct adl_serializer<std::vector<mcp::protocol::ModelHint>> {
+//    static void to_json(json& j, const std::vector<mcp::protocol::ModelHint>& v) {
+//        j = json::array();
+//        for (const auto& item : v) {
+//            j.push_back(item);
+//        }
+//    }
+//    static void from_json(const json& j, std::vector<mcp::protocol::ModelHint>& v) {
+//        for (const auto& item : j) {
+//            v.push_back(item.get<mcp::protocol::ModelHint>());
+//        }
+//    }
+//};
+//}
+namespace mcp::protocol {
 // RequestId and ProgressToken
 using RequestId = std::variant<std::string, int>;
 using ProgressToken = RequestId;
@@ -78,6 +99,9 @@ struct ModelPreferences {
     std::optional<double> intelligencePriority;
     std::optional<std::vector<ModelHint>> hints;
 };
+
+
+
 inline void to_json(json& j, const ModelPreferences& m) {
     j = json{};
     if (m.costPriority)        j["costPriority"]        = *m.costPriority;
@@ -86,10 +110,22 @@ inline void to_json(json& j, const ModelPreferences& m) {
     if (m.hints)               j["hints"]               = *m.hints;
 }
 inline void from_json(const json& j, ModelPreferences& m) {
-    if (j.contains("costPriority"))         j.at("costPriority").get_to(m.costPriority);
-    if (j.contains("speedPriority"))        j.at("speedPriority").get_to(m.speedPriority);
-    if (j.contains("intelligencePriority")) j.at("intelligencePriority").get_to(m.intelligencePriority);
-    if (j.contains("hints"))               j.at("hints").get_to(m.hints);
+    if (j.contains("costPriority") && !j["costPriority"].is_null()) {
+//        j.at("costPriority").get_to(m.costPriority);
+        m.costPriority = j.at("costPriority").get<double>();
+    }
+    if (j.contains("speedPriority") && !j["speedPriority"].is_null()) {
+//        j.at("speedPriority").get_to(m.speedPriority);
+		m.speedPriority = j.at("speedPriority").get<double>();
+    }
+    if (j.contains("intelligencePriority") && !j["intelligencePriority"].is_null()) {
+//        j.at("intelligencePriority").get_to(m.intelligencePriority);
+		m.intelligencePriority = j.at("intelligencePriority").get<double>();
+    }
+    if (j.contains("hints") && !j["hints"].is_null()) {
+//        j.at("hints").get_to(m.hints);
+		m.hints = j.at("hints").get<std::vector<ModelHint>>();
+    }
 }
 
 // Result (generic)
@@ -104,9 +140,6 @@ inline void from_json(const json& j, Result& r) {
     if (j.contains("_meta")) j.at("_meta").get_to(r._meta);
 }
 
-// Role (from McpContent.hpp)
-// SamplingMessage (alias)
-using SamplingMessage = PromptMessage;
 
 // ServerCapabilities (extension)
 struct ServerCapabilities {
@@ -158,6 +191,7 @@ inline void to_json(json& j, const ServerRequest& sr) {
 
 // ServerResult
 using ServerResult = std::variant<
+    Result,
     InitializeResult,
     ListResourcesResult,
     ReadResourceResult,
@@ -168,7 +202,7 @@ using ServerResult = std::variant<
     CompleteResult
 >;
 inline void to_json(json& j, const ServerResult& sr) {
-    std::visit([&](auto&& arg){ j = arg; }, sr);
+    std::visit([&j](auto&& arg){ j = arg; }, sr);
 }
 inline void from_json(const json& j, ServerResult& sr) {
     // 判别可根据 keys
@@ -180,4 +214,6 @@ inline void from_json(const json& j, ServerResult& sr) {
     else if (j.contains("tools"))     sr = j.get<ListToolsResult>();
     else if (j.contains("content"))   sr = j.get<CallToolResult>();
     else if (j.contains("completion"))sr = j.get<CompleteResult>();
+}
+
 }
