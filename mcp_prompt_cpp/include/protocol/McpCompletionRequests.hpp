@@ -10,19 +10,19 @@
 using json = nlohmann::json;
 
 namespace mcp::protocol {
-// ===== ResourceReference =====
-// 引用一个资源（或资源模板）
-struct ResourceReference {
-    std::string type{"ref/resource"};
-    std::string uri;
-};
-
-inline void to_json(json& j, const ResourceReference& r) {
-    j = json{{"type", r.type}, {"uri", r.uri}};
-}
-inline void from_json(const json& j, ResourceReference& r) {
-    j.at("uri").get_to(r.uri);
-}
+//// ===== ResourceReference =====
+//// 引用一个资源（或资源模板）
+//struct ResourceReference {
+//    std::string type{"ref/resource"};
+//    std::string uri;
+//};
+//
+//inline void to_json(json& j, const ResourceReference& r) {
+//    j = json{{"type", r.type}, {"uri", r.uri}};
+//}
+//inline void from_json(const json& j, ResourceReference& r) {
+//    j.at("uri").get_to(r.uri);
+//}
 
 // ===== CompletionArgument =====
 // 自动补全参数

@@ -186,6 +186,7 @@ struct ResourceUpdatedNotification {
     std::string method = "notifications/resources/updated";
     struct Params { std::string uri; } params;
 };
+
 inline void to_json(json& j, const ResourceUpdatedNotification& n) {
     j = json{{"method", n.method}, {"params", { {"uri", n.params.uri} }}};
 }

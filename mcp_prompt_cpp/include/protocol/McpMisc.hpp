@@ -14,20 +14,33 @@
 #include "McpJsonRpc.hpp"
 #include "McpCapabilities.hpp"
 #include "McpContent.hpp"
-
-
-
-using json = nlohmann::json;
+#include "McpSamplingBatch.hpp"
 
 
 
 //namespace nlohmann {
+//template<typename T>
+//struct adl_serializer<std::optional<T>> {
+//    static void to_json(json& j, const std::optional<T>& opt) {
+//        if (opt) j = *opt;
+//        else j = nullptr;
+//    }
+//    static void from_json(const json& j, std::optional<T>& opt) {
+//        if (j.is_null()) opt = std::nullopt;
+//        else opt = j.get<T>();
+//    }
+//};
+//}
+
+// 第一步：在全局命名空间定义nlohmann的特化
+namespace nlohmann {
+// 先为vector<ModelHint>添加序列化支持
 //template <>
 //struct adl_serializer<std::vector<mcp::protocol::ModelHint>> {
 //    static void to_json(json& j, const std::vector<mcp::protocol::ModelHint>& v) {
 //        j = json::array();
 //        for (const auto& item : v) {
-//            j.push_back(item);
+//            j.push_back(item); // 这里会调用mcp::protocol命名空间中的to_json
 //        }
 //    }
 //    static void from_json(const json& j, std::vector<mcp::protocol::ModelHint>& v) {
@@ -36,8 +49,35 @@ using json = nlohmann::json;
 //        }
 //    }
 //};
-//}
+
+// 第二步：添加optional的通用处理（如果尚未添加）
+template <typename T>
+struct adl_serializer<std::optional<T>> {
+    static void to_json(json& j, const std::optional<T>& opt) {
+        if (opt) j = *opt;
+        else j = nullptr;
+    }
+    static void from_json(const json& j, std::optional<T>& opt) {
+        if (j.is_null()) opt = std::nullopt;
+        else opt = j.get<T>();
+    }
+};
+} // namespace nlohmann
+
+
+
+
+
+using json = nlohmann::json;
+
+// 为std::vector<ModelHint>添加序列化支持（取消注释并修复原有代码）
+
+
+
+
 namespace mcp::protocol {
+//#include <nlohmann/json.hpp>
+//using json = nlohmann::json;
 // RequestId and ProgressToken
 using RequestId = std::variant<std::string, int>;
 using ProgressToken = RequestId;
@@ -92,6 +132,56 @@ struct ModelHint {
 inline void to_json(json& j, const ModelHint& m) { j = json{{"name", m.name}}; }
 inline void from_json(const json& j, ModelHint& m) { j.at("name").get_to(m.name); }
 
+//// 在nlohmann命名空间内添加序列化特化
+//namespace nlohmann {
+//// 为std::vector<ModelHint>添加序列化支持
+//template <>
+//struct ::nlohmann::adl_serializer<std::vector<mcp::protocol::ModelHint>> {
+//    static void to_json(json& j, const std::vector<mcp::protocol::ModelHint>& v) {
+//        j = json::array();
+//        for (const auto& item : v) {
+//            j.push_back(item);
+//        }
+//    }
+//    static void from_json(const json& j, std::vector<mcp::protocol::ModelHint>& v) {
+//        for (const auto& item : j) {
+//            v.push_back(item.get<mcp::protocol::ModelHint>());
+//        }
+//    }
+//};
+//
+//// 为optional类型添加通用序列化支持（如果需要）
+//template <typename T>
+//struct ::nlohmann::adl_serializer<std::optional<T>> {
+//    static void to_json(json& j, const std::optional<T>& opt) {
+//        if (opt.has_value()) j = *opt;
+//        else j = nullptr;
+//    }
+//    static void from_json(const json& j, std::optional<T>& opt) {
+//        if (j.is_null()) opt = std::nullopt;
+//        else opt = j.get<T>();
+//    }
+//};
+//} // namespace nlohmann
+
+
+//namespace nlohmann {
+//template <>
+//struct adl_serializer<std::vector<mcp::protocol::ModelHint>> {
+//    static void to_json(json& j, const std::vector<mcp::protocol::ModelHint>& v) {
+//        j = json::array();
+//        for (const auto& item : v) {
+//            j.push_back(item); // 这里会调用ModelHint的to_json
+//        }
+//    }
+//    static void from_json(const json& j, std::vector<mcp::protocol::ModelHint>& v) {
+//        for (const auto& item : j) {
+//            v.push_back(item.get<mcp::protocol::ModelHint>());
+//        }
+//    }
+//};
+//} // namespace nlohmann
+
 // ModelPreferences
 struct ModelPreferences {
     std::optional<double> costPriority;
@@ -107,7 +197,7 @@ inline void to_json(json& j, const ModelPreferences& m) {
     if (m.costPriority)        j["costPriority"]        = *m.costPriority;
     if (m.speedPriority)       j["speedPriority"]       = *m.speedPriority;
     if (m.intelligencePriority)j["intelligencePriority"]=*m.intelligencePriority;
-    if (m.hints)               j["hints"]               = *m.hints;
+//    if (m.hints)               j["hints"]               = *m.hints;
 }
 inline void from_json(const json& j, ModelPreferences& m) {
     if (j.contains("costPriority") && !j["costPriority"].is_null()) {
@@ -133,49 +223,85 @@ struct Result {
     std::optional<json> _meta;
 };
 inline void to_json(json& j, const Result& r) {
-    if (r._meta) j = json{{"_meta", *r._meta}};
-    else         j = json{};
+   json temp = json::object();
+    if (r._meta) temp = json{{"_meta", *r._meta}};
+    else         temp = json::object();
+    j.swap(temp);
 }
 inline void from_json(const json& j, Result& r) {
     if (j.contains("_meta")) j.at("_meta").get_to(r._meta);
 }
 
-
-// ServerCapabilities (extension)
-struct ServerCapabilities {
-    std::optional<json> completions;
-    std::optional<json> experimental;
-    std::optional<json> logging;
-    struct Prompts { std::optional<bool> listChanged; };
-    std::optional<Prompts> prompts;
-    struct Resources { std::optional<bool> listChanged; std::optional<bool> subscribe; };
-    std::optional<Resources> resources;
-    struct Tools { std::optional<bool> listChanged; };
-    std::optional<Tools> tools;
-};
-inline void to_json(json& j, const ServerCapabilities& s) {
-    j = json{};
-    if (s.completions)   j["completions"]   = *s.completions;
-    if (s.experimental)  j["experimental"]  = *s.experimental;
-    if (s.logging)       j["logging"]       = *s.logging;
-    if (s.prompts) {
-        j["prompts"]["listChanged"] = *s.prompts->listChanged;
-    }
-    if (s.resources) {
-        auto& r = *s.resources;
-        j["resources"]["listChanged"] = *r.listChanged;
-        j["resources"]["subscribe"]   = *r.subscribe;
-    }
-    if (s.tools) j["tools"]["listChanged"] = *s.tools->listChanged;
-}
-inline void from_json(const json& j, ServerCapabilities& s) {
-    if (j.contains("completions"))   j.at("completions").get_to(s.completions);
-    if (j.contains("experimental"))  j.at("experimental").get_to(s.experimental);
-    if (j.contains("logging"))       j.at("logging").get_to(s.logging);
-    if (j.contains("prompts"))      s.prompts = j.at("prompts").get<ServerCapabilities::Prompts>();
-    if (j.contains("resources"))    s.resources = j.at("resources").get<ServerCapabilities::Resources>();
-    if (j.contains("tools"))        s.tools = j.at("tools").get<ServerCapabilities::Tools>();
-}
+//
+//// ServerCapabilities (extension)
+//struct ServerCapabilities {
+//    std::optional<json> completions;
+//    std::optional<json> experimental;
+//    std::optional<json> logging;
+//    struct Prompts { std::optional<bool> listChanged;
+//   		 // 添加完整的序列化方法（替代宏）
+//        friend void to_json(json& j, const Prompts& p) {
+//            j = json{};
+//            if (p.listChanged) j["listChanged"] = *p.listChanged;
+//        }
+//        friend void from_json(const json& j, Prompts& p) {
+//            if (j.contains("listChanged")) {
+//                p.listChanged = j.at("listChanged").get<bool>();
+//            }
+//        }
+//    };
+//    std::optional<Prompts> prompts;
+//    struct Resources { std::optional<bool> listChanged; std::optional<bool> subscribe;
+//      	 // 添加完整的序列化方法
+//        friend void to_json(json& j, const Resources& r) {
+//            j = json{};
+//            if (r.listChanged) j["listChanged"] = *r.listChanged;
+//            if (r.subscribe)   j["subscribe"]   = *r.subscribe;
+//        }
+//        friend void from_json(const json& j, Resources& r) {
+//            if (j.contains("listChanged")) r.listChanged = j.at("listChanged").get<bool>();
+//            if (j.contains("subscribe"))   r.subscribe   = j.at("subscribe").get<bool>();
+//        }
+//
+//    };
+//    std::optional<Resources> resources;
+//    struct Tools { std::optional<bool> listChanged;
+// // 添加完整的序列化方法
+//        friend void to_json(json& j, const Tools& t) {
+//            j = json{};
+//            if (t.listChanged) j["listChanged"] = *t.listChanged;
+//        }
+//        friend void from_json(const json& j, Tools& t) {
+//            if (j.contains("listChanged")) {
+//                t.listChanged = j.at("listChanged").get<bool>();
+//            }
+//        }
+//    };
+//    std::optional<Tools> tools;
+//};
+//inline void to_json(json& j, const ServerCapabilities& s) {
+//    j = json{};
+//    if (s.completions)   j["completions"]   = *s.completions;
+//    if (s.experimental)  j["experimental"]  = *s.experimental;
+//    if (s.logging)       j["logging"]       = *s.logging;
+//    if (s.prompts) {
+//        j["prompts"]["listChanged"] = *s.prompts->listChanged;
+//    }
+//    if (s.resources) {
+//        auto& r = *s.resources;
+//        j["resources"]["listChanged"] = *r.listChanged;
+//        j["resources"]["subscribe"]   = *r.subscribe;
+//    }
+//    if (s.tools) j["tools"]["listChanged"] = *s.tools->listChanged;
+//}
+//inline void from_json(const json& j, ServerCapabilities& s) {
+//    if (j.contains("completions"))   j.at("completions").get_to(s.completions);
+//    if (j.contains("experimental"))  j.at("experimental").get_to(s.experimental);
+//    if (j.contains("logging"))       j.at("logging").get_to(s.logging);
+//    if (j.contains("prompts"))      s.prompts = j.at("prompts").get<ServerCapabilities::Prompts>();
+//    if (j.contains("resources"))    s.resources = j.at("resources").get<ServerCapabilities::Resources>();
+//    if (j.contains("tools"))        s.tools = j.at("tools").get<ServerCapabilities::Tools>();
+//}
 
 // ServerRequest
 using ServerRequest = std::variant<PingRequest, CreateMessageRequest, ListRootsRequest>;
@@ -202,7 +328,7 @@ using ServerResult = std::variant<
     CompleteResult
 >;
 inline void to_json(json& j, const ServerResult& sr) {
-    std::visit([&j](auto&& arg){ j = arg; }, sr);
+    std::visit([&j](auto&& arg){ j = json(arg); }, sr);
 }
 inline void from_json(const json& j, ServerResult& sr) {
     // 判别可根据 keys
@@ -217,3 +343,5 @@ inline void from_json(const json& j, ServerResult& sr) {
 }
 
 }
+
+

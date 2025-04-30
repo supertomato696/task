@@ -6,6 +6,29 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 
+// 在nlohmann命名空间内添加variant的序列化支持
+namespace nlohmann {
+template <>
+struct adl_serializer<std::variant<std::string, int>> {
+    static void to_json(json& j, const std::variant<std::string, int>& v) {
+        std::visit([&j](auto&& arg) {
+            j = arg; // 自动推导类型
+        }, v);
+    }
+
+    static void from_json(const json& j, std::variant<std::string, int>& v) {
+        if (j.is_string()) {
+            v = j.get<std::string>();
+        } else if (j.is_number_integer()) {
+            v = j.get<int>();
+        } else {
+            throw json::type_error::create(302, "type must be string or integer", &j);
+        }
+    }
+};
+} // namespace nlohmann
+
+
 using json = nlohmann::json;
 
 namespace mcp::protocol {
@@ -150,5 +173,40 @@ inline void from_json(const json& j, JSONRPCBatchResponse& batch) {
         }
     }
 }
+
+
+// ===== JSONRPCMessage =====
+using JSONRPCMessage = std::variant<
+    JSONRPCRequest,
+    JSONRPCNotification,
+    JSONRPCBatchRequest,
+    JSONRPCResponse,
+    JSONRPCErrorResponse,
+    JSONRPCBatchResponse
+>;
+
+inline void to_json(json& j, const JSONRPCMessage& m) {
+    std::visit([&j](auto&& arg){ j = arg; }, m);
+}
+
+inline void from_json(const json& j, JSONRPCMessage& m) {
+    // 判别 JSON-RPC message 类型
+    auto it = j.find("jsonrpc");
+    if (it == j.end()) {
+        // 批量请求或响应
+        if (j.is_array()) {
+            // 需更详细判别，此处默认
+            m = j.get<JSONRPCBatchRequest>();
+        }
+        return;
+    }
+    std::string jsonrpc = j.at("jsonrpc").get<std::string>();
+    if (jsonrpc != "2.0") return;
+    if (j.contains("method") && j.contains("id"))          m = j.get<JSONRPCRequest>();
+    else if (j.contains("method"))                          m = j.get<JSONRPCNotification>();
+    else if (j.contains("result") && j.contains("id"))    m = j.get<JSONRPCResponse>();
+    else if (j.contains("error")  && j.contains("id"))    m = j.get<JSONRPCErrorResponse>();
+}
+
 
 }

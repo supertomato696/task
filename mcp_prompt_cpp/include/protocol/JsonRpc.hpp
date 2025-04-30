@@ -53,7 +53,7 @@ inline json makeError (const Id& id, int code, const std::string& msg){
 }
 
 /* -------  id 解析工具  ------- */
-inline Id parseId(const json& j){
+inline Id parseId(const json& j) {
     if(j.contains("id")){
         if(j["id"].is_number_integer()) return j["id"].get<int64_t>();
         if(j["id"].is_string())         return j["id"].get<std::string>();

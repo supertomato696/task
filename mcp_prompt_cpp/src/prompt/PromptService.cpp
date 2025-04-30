@@ -9,7 +9,7 @@ static json make_error(const std::string& id,int code,const std::string& msg){
     return { {"jsonrpc","2.0"}, {"id", id}, {"error", {{"code",code},{"message",msg}}}};
 }
 
-json PromptService::handle(const json& req){
+json PromptService::handle(const json& req) {
     const std::string id = req.value("id","0");
     const std::string method = req.at("method");
     const json params = req.value("params", json::object());

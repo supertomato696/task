@@ -10,16 +10,16 @@
 #include <stdexcept>
 #include <nlohmann/json.hpp>
 #include <asio.hpp>
-#include "McpContent.hpp"       // PromptMessage, TextResourceContents, BlobResourceContents, ResourceReference, EmbeddedResource
-#include "Base64.hpp"          // Base64 encoder
+#include "protocol/McpContent.hpp"       // PromptMessage, TextResourceContents, BlobResourceContents, ResourceReference, EmbeddedResource
+//#include "Base64.hpp"          // Base64 encoder
 
 namespace mcp::resource {
 
 using json = nlohmann::json;
-using content::TextResourceContents;
-using content::BlobResourceContents;
-using content::ResourceReference;
-using content::EmbeddedResource;
+using mcp::protocol::TextResourceContents;
+using mcp::protocol::BlobResourceContents;
+using mcp::protocol::ResourceReference;
+using mcp::protocol::EmbeddedResource;
 
 // ===== ResourceResolver 接口 =====
 class ResourceResolver {
@@ -207,12 +207,12 @@ private:
 namespace mcp::utils {
 
 using resource::ResourceService;
-using content::PromptMessage;
-using content::EmbeddedResource;
-using content::ResourceReference;
-using content::TextContent;
-using content::ImageContent;
-using content::AudioContent;
+using mcp::protocol::PromptMessage;
+using mcp::protocol::EmbeddedResource;
+using mcp::protocol::ResourceReference;
+using mcp::protocol::TextContent;
+using mcp::protocol::ImageContent;
+using mcp::protocol::AudioContent;
 
 class MultimodalAssembler {
 public:

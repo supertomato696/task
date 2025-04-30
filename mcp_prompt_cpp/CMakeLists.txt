@@ -4,6 +4,20 @@ project(mcp_prompt_cpp LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+include_directories(
+    include
+    include/protocol
+    include/prompt
+    
+    third_party/httplib
+    third_party/sqlite_modern_cpp/hdr
+    third_party/json-schema-validator/single_include
+    third_party/json/single_include
+    third_party/asio/asio/include
+    third_party/inja/include
+    
+)
+
 # ---------------------------------------------------------------------
 # third‑party header‑only libs作为 INTERFACE 目标
 # ---------------------------------------------------------------------

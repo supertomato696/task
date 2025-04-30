@@ -235,6 +235,21 @@ inline void from_json(const json& j, Resource& r)
     if (j.contains("annotations")) j.at("annotations").get_to(r.annotations.emplace());
 }
 
+
+    // ===== ResourceReference =====
+    // 引用一个资源（或资源模板）
+    struct ResourceReference {
+    std::string type{"ref/resource"};
+    std::string uri;
+};
+
+    inline void to_json(json& j, const ResourceReference& r) {
+        j = json{{"type", r.type}, {"uri", r.uri}};
+    }
+    inline void from_json(const json& j, ResourceReference& r) {
+        j.at("uri").get_to(r.uri);
+    }
+
 /* -----------------------------------------------------------
  *  ResourceContents  (resources/read → contents[ ] 里的元素)
  * -----------------------------------------------------------*/

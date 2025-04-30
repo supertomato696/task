@@ -88,7 +88,7 @@ protocol::PromptMessage MultiModalAssembler::assemble(const std::string& role,co
     }
 
     /* --- 3. 其他 URI → EmbeddedResource (含图片文件等) --- */
-    if(isUri(v) && v.rfind("file://",0)==0){
+    if(isUri(v) && v.rfind("file://",0)==0) {
         std::string path = v.substr(7);
         std::string ext  = fs::path(path).extension().string().substr(1);
         protocol::EmbeddedResource er;
