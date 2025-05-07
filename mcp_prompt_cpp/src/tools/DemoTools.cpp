@@ -1,48 +1,56 @@
-#include "tools/ToolRegistry.hpp"
 #include "tools/DemoTools.hpp"
 #include <fstream>
+
+using namespace mcp::tools;
 using json = nlohmann::json;
-namespace mcp::tools {
 
-
-/* ---- say_text: {"text": string} → assistant TextContent ---- */
-static ToolReply say_text(const ToolArgs& a){
-    std::string t = a.value("text","");
-    return json::array({{
-        {"type","text"},{"text",std::string("🗣️ ")+t}
-    }});
+/* ---------- say_text {"text":string} --------------------------- */
+static ToolReply say_text(const ToolArgs& a)
+{
+    std::string txt = a.value("text", "");
+    protocol::PromptMessage out;
+    out.role = protocol::Role::assistant;
+    out.content = protocol::TextContent{ .text = "🗣️ " + txt };
+    return { std::move(out) };
 }
 
-/* ---- car_info: 无参 → EmbeddedResource (假读文件) ---- */
-static ToolReply car_info(const ToolArgs&){
+/* ---------- car_info {}  → EmbeddedResource -------------------- */
+static ToolReply car_info(const ToolArgs&)
+{
     std::ifstream f("/var/lib/mcp/car_status.json");
-    std::string body{std::istreambuf_iterator<char>(f),{}};
-    return json::array({{
-        {"type","resource"},
-        {"resource",{
-             {"uri","file:///var/lib/mcp/car_status.json"},
-             {"mimeType","application/json"},
-             {"text",body}
-        }}
-    }});
+    std::string body{ std::istreambuf_iterator<char>(f), {} };
+
+    protocol::EmbeddedResource res;
+    res.resource = protocol::TextResourceContents{
+        .uri      = "file:///var/lib/mcp/car_status.json",
+        .mimeType = "application/json",
+        .text     = body
+    };
+
+    protocol::PromptMessage msg;
+    msg.role    = protocol::Role::assistant;
+    msg.content = std::move(res);
+    return { std::move(msg) };
 }
 
-/* ---- 注册 ---- */
-void registerDemoTools(ToolRegistry& reg){
-    reg.registerTool("say_text", {
-        /*inputSchema*/{
-            {"type","object"},
-            {"properties",{{"text", {{"type","string"}}}}},
-            {"required",{"text"}}
-        },
-        /*desc*/"朗读指定文本",
-        /*cb*/ &say_text
-    });
-    reg.registerTool("car_info", {
-        {{"type","object"}, {"properties", nlohmann::json::object()}},
-        "返回车辆状态 JSON",
-        &car_info
-    });
-}
+/* ---------- 注册入口 ------------------------------------------- */
+void registerDemoTools(ToolRegistry& reg)
+{
+    /* say_text */
+    protocol::Tool meta1;
+    meta1.name        = "say_text";
+    meta1.description = "朗读指定文本";
+    meta1.inputSchema = R"({"type":"object",
+                             "properties":{"text":{"type":"string"}},
+                             "required":["text"]})"_json;
 
+    reg.registerTool({meta1, &say_text});
+
+    /* car_info */
+    protocol::Tool meta2;
+    meta2.name        = "car_info";
+    meta2.description = "返回车辆状态 JSON";
+    meta2.inputSchema = R"({"type":"object","properties":{}})"_json;
+
+    reg.registerTool({meta2, &car_info});
 }

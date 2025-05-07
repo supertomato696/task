@@ -2,29 +2,38 @@
 #include <stdexcept>
 
 using namespace mcp::tools;
-using json = nlohmann::json;
 
-void ToolRegistry::registerTool(std::string n, ToolDef d){
-    map_.emplace(std::move(n), std::move(d));
+void ToolRegistry::registerTool(const ToolDef& def)
+{
+    map_.emplace(def.meta.name, def);
 }
 
-std::vector<json> ToolRegistry::listTools() const {
-    std::vector<json> v;
-    for(auto& [name,def]: map_){
-        v.push_back({
-            {"name",name},
-            {"description",def.description},
-            {"inputSchema",def.inputSchema}
-        });
-    }
+std::vector<protocol::Tool> ToolRegistry::listTools() const
+{
+    std::vector<protocol::Tool> v;
+    v.reserve(map_.size());
+    for (auto& [_, d] : map_) v.push_back(d.meta);
     return v;
 }
 
-ToolReply ToolRegistry::invoke(const std::string& n,const ToolArgs& a) const{
-    auto it = map_.find(n);
-    if(it==map_.end()) throw std::runtime_error("tool not found");
-    return it->second.callback(a);
+ToolReply ToolRegistry::invoke(const std::string& name,
+                               const ToolArgs&    args) const
+{
+    auto it = map_.find(name);
+    if(it == map_.end())
+        throw std::runtime_error("tool not found: " + name);
+
+    return it->second.callback(args);
 }
 
+void ToolRegistry::registerTool(const ToolDef& def)
+{
+    map_.emplace(def.meta.name, def);
+    if(onChanged_) onChanged_();
+}
 
-// （为简洁，未做 JSON‑Schema 校验；如需可接入 [vocab/json‑schema‑validator](https://github.com/pboettch/json-schema-validator) ）
+void ToolRegistry::removeTool(const std::string& name)
+{
+    map_.erase(name);
+    if(onChanged_) onChanged_();
+}
