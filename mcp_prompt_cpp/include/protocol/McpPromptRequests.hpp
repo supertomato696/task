@@ -117,25 +117,40 @@ inline void from_json(const json& j, ListPromptsResult& r) {
 
 struct PromptListChangedNotification {
     std::string method = "notifications/prompts/list_changed";
-    // 可选的元数据
-    std::optional<nlohmann::json> _meta;
+    struct Params {
+        std::optional<json> _meta;
+    } params;
 };
 
-inline void to_json(nlohmann::json& j, const PromptListChangedNotification& n) {
-    j = nlohmann::json{{"method", n.method}};
-    // params 始终存在，但 _meta 可选
-    nlohmann::json params = nlohmann::json::object();
-    if (n._meta) {
-        params["_meta"] = *n._meta;
+    inline void to_json(json& j, const PromptListChangedNotification::Params& p) {
+        j = json::object();
+        if (p._meta) j["_meta"] = *p._meta;
     }
-    j["params"] = params;
-}
 
-inline void from_json(const nlohmann::json& j, PromptListChangedNotification& n) {
-    if (j.contains("params") && j["params"].contains("_meta")) {
-        j["params"].at("_meta").get_to(n._meta);
+    inline void from_json(const json& j, PromptListChangedNotification::Params& p) {
+        if (j.contains("_meta")) j.at("_meta").get_to(p._meta);
     }
-}
+
+    inline void to_json(json& j, const PromptListChangedNotification& n) {
+        j = json{
+            {"method", n.method},
+            {"params", n.params}  // 自动调用Params的序列化
+        };
+    }
+
+    inline void from_json(const json& j, PromptListChangedNotification& n) {
+        j.at("method").get_to(n.method);
+        j.at("params").get_to(n.params);
+    }
+
+// {
+//     "method": "notifications/prompts/list_changed",
+//     "params": {
+//         "_meta": {
+//             "timestamp": "2023-07-01T12:00:00Z"
+//           }
+//     }
+// }
 
 
 // ===== PromptReference =====

@@ -169,17 +169,51 @@ inline void from_json(const json& j, CallToolResult& r) {
 // ===== ToolListChangedNotification =====
 struct ToolListChangedNotification {
     std::string method = "notifications/tools/list_changed";
-    std::optional<json> _meta;
+    struct Params {
+        std::optional<json> _meta;
+    } params;
 };
-inline void to_json(json& j, const ToolListChangedNotification& n) {
-    j = json{{"method", n.method}};
-    json params = json::object();
-    if (n._meta) params["_meta"] = *n._meta;
-    j["params"] = params;
-}
-inline void from_json(const json& j, ToolListChangedNotification& n) {
-    if (j.contains("params") && j["params"].contains("_meta"))
-        j["params"].at("_meta").get_to(n._meta);
-}
+    inline void to_json(json& j, const ToolListChangedNotification::Params& p) {
+        j = json::object();
+        if (p._meta) j["_meta"] = *p._meta;
+    }
+
+    inline void from_json(const json& j, ToolListChangedNotification::Params& p) {
+        if (j.contains("_meta")) j.at("_meta").get_to(p._meta);
+    }
+
+    inline void to_json(json& j, const ToolListChangedNotification& n) {
+        j = json{
+            {"method", n.method},
+            {"params", n.params}  // 自动调用Params的序列化
+        };
+    }
+
+    inline void from_json(const json& j, ToolListChangedNotification& n) {
+        j.at("method").get_to(n.method);
+        j.at("params").get_to(n.params);
+    }
+
+// {
+//     "method": "notifications/tools/list_changed",
+//     "params": {
+//         "_meta": {"traceId": "xyz789"}  // 符合Schema层级要求
+//     }
+// }
+
+    // ToolListChangedNotification notif;
+    // notif.params._meta = json{{"timestamp", "2023-07-01T12:00:00Z"}};
+    //
+    // // 序列化结果：
+    // {
+    // "method": "notifications/tools/list_changed",
+    // "params": {
+    //     "_meta": {
+    //         "timestamp": "2023-07-01T12:00:00Z"
+    //       }
+    // }
+    // }
+
+
 
 }

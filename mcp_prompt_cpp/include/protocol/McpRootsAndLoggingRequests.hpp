@@ -195,7 +195,7 @@ inline void from_json(const json& j, ProgressNotification& n) {
 
 // ===== 取消通知 =====
 struct CancelledNotification {
-    std::string method = "notifications/cancelled";
+     const std::string method = "notifications/cancelled";
     struct Params {
         std::variant<std::string, int> requestId;
         std::optional<std::string> reason;

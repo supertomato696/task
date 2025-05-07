@@ -29,7 +29,7 @@ struct InitializeRequest {
     std::string method = "initialize";
 
     struct Params {
-        json capabilities;           // 客户端能力声明
+        ClientCapabilities capabilities;           // 客户端能力声明
         Implementation clientInfo;
         std::string protocolVersion;
     } params;
@@ -57,7 +57,7 @@ inline void from_json(const json& j, InitializeRequest& r) {
 struct InitializeResult {
     std::optional<json> _meta;
     std::string protocolVersion;
-    json capabilities;           // #/definitions/ServerCapabilities" 服务器能力
+    ServerCapabilities capabilities;           // #/definitions/ServerCapabilities" 服务器能力
     Implementation serverInfo;
     std::optional<std::string> instructions;
 };

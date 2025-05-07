@@ -76,6 +76,14 @@ target_link_libraries(mcp_core
         SQLite::SQLite3
 )
 
+#target_link_libraries(mcp_core PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+
+target_sources(mcp_core
+        PRIVATE
+        src/prompt/MultiModalAssembler.cpp
+        # TemplateEngine 只有头文件，无需 cpp
+)
+
 # ---------------------------------------------------------------------
 # Server executable
 # ---------------------------------------------------------------------
@@ -93,6 +101,20 @@ target_link_libraries(mcp_client
         nlohmann_json
         Threads::Threads
 )
+
+
+add_library(mcp_client2
+        src/client2/JsonRpcClient.cpp
+)
+target_include_directories(mcp_client2 PUBLIC include)
+target_link_libraries(mcp_client2 PUBLIC asio nlohmann_json Threads::Threads)
+
+#--------------------------
+add_library(transport
+        src/transport/AsioTcpTransport.cpp
+)
+target_include_directories(transport PUBLIC include)
+target_link_libraries(transport PUBLIC asio Threads::Threads nlohmann_json)
 
 #--------------------------client_main
 add_executable(mcp_client_demo src/client_main.cpp)

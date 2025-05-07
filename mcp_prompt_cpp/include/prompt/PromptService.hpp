@@ -1,64 +1,44 @@
-// include/prompt/PromptService.hpp
 #pragma once
-#include "protocol/JsonRpc.hpp"
+#include "protocol/McpPromptRequests.hpp"   // ListPrompts*, GetPrompt*
+#include "protocol/McpJsonRpc.hpp"
 #include "prompt/PromptStore.hpp"
-#include "prompt/TemplateEngine.hpp"
-#include "prompt/MultiModalAssembler.hpp"
-#include "protocol/McpContent.hpp"
+
 #include <nlohmann/json.hpp>
-#include <unordered_map>
+#include <functional>
 
 namespace mcp::prompt {
 
-// struct PromptTemplate {
-//     std::string name;
-//     std::string description;
-//     nlohmann::json messages;   // 原始 JSON 模板 (messages 数组)
-//     std::vector<std::string>  arguments;
-// };
-
-// class PromptStore {
-// public:
-//     // 内存版本
-//    virtual  void add(const PromptTemplate& t) { store_[t.name]=t; }
-//    virtual  const PromptTemplate* find(const std::string& n) const {
-//         auto it = store_.find(n); return it==store_.end()?nullptr:&it->second;
-//     }
-//    virtual  std::vector<PromptTemplate> all() const {
-//         std::vector<PromptTemplate> v;
-//         for(auto&[_,p]:store_) v.push_back(p); return v;
-//     }
-//
-//     virtual ~PromptStore() = default;
-// private: std::unordered_map<std::string,PromptTemplate> store_;
-// };
-
-
-
-/* -------- JSON‑RPC Handler -------- */
+/**
+ * PromptService —— JSON‑RPC 处理器
+ * ---------------------------------
+ *  • prompts/list          → ListPromptsResult
+ *  • prompts/get           → GetPromptResult  (通过 PromptStore::renderPrompt)
+ *  • fireListChanged()     → 主动发 list_changed 通知
+ *
+ *  Notify 回调 typdef：void(const nlohmann::json& readyJson)
+ */
 class PromptService {
 public:
-    explicit PromptService(IPromptStore& st):store_(st){}
-//    explicit PromptService(PromptStore& store);
+    using json   = nlohmann::json;
+    using Notify = std::function<void(const json&)>;
 
-    /** 输入 JSON‑RPC request (2.0) → 返回 response/result */
-    nlohmann::json handle(const nlohmann::json& req);
+    explicit PromptService(PromptStore& store, Notify notifier = {});
 
-//    /** Handle JSON-RPC request, throw on protocol error */
-//    protocol::JsonRpcResponse handle(const protocol::JsonRpcRequest& req);
+    /** 主入口：处理到来的 JSON‑RPC 请求 */
+    json handleRpc(const json& request);
 
-private:
-//    protocol::JsonRpcResponse handleList(const protocol::JsonRpcRequest&);
-//    protocol::JsonRpcResponse handleGet (const protocol::JsonRpcRequest&);
-
+    /** 当模板集发生变更时可调用，向客户端推送通知 */
+    void fireListChanged() const;
 
 private:
-     nlohmann::json listPrompts(const std::string& id,const nlohmann::json& params);
-    nlohmann::json getPrompt (const std::string& id,const nlohmann::json& params);
+    /* 各 RPC 的强类型实现 */
+    protocol::ListPromptsResult handleList() const;
 
-    IPromptStore&           store_;
-    TemplateEngine         tpl_;
-    MultiModalAssembler    mma_;
+    protocol::GetPromptResult handleGet(
+        const protocol::GetPromptRequest& req);
+
+    PromptStore& store_;
+    Notify       notify_;
 };
 
-} // namespace mcp
+} // namespace

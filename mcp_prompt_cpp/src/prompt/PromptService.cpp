@@ -1,58 +1,79 @@
-// src/prompt/PromptService.cpp
 #include "prompt/PromptService.hpp"
-#include <inja/inja.hpp>
+#include <stdexcept>
 
 using namespace mcp::prompt;
-using nlohmann::json;
+namespace proto = mcp::protocol;
 
-static json make_error(const std::string& id,int code,const std::string& msg){
-    return { {"jsonrpc","2.0"}, {"id", id}, {"error", {{"code",code},{"message",msg}}}};
-}
+/* ---------- ctor ---------- */
+PromptService::PromptService(PromptStore& s, Notify n)
+    : store_(s), notify_(std::move(n)) {}
 
-json PromptService::handle(const json& req) {
-    const std::string id = req.value("id","0");
+/* ===================================================================== */
+/*                           JSON‑RPC dispatcher                         */
+/* ===================================================================== */
+PromptService::json PromptService::handleRpc(const json& req)
+{
+    const std::string id     = req.value("id", "0");
     const std::string method = req.at("method");
-    const json params = req.value("params", json::object());
 
-    if(method=="prompts/list")
-        return listPrompts(id, params);
-    if(method=="prompts/get")
-        return getPrompt(id, params);
-    return make_error(id,-32601,"Method not found");
+    try {
+        /* ------------ prompts/list ------------ */
+        if (method == "prompts/list") {
+            auto result = handleList();
+            return proto::makeJsonRpcResult(id, result);
+        }
+
+        /* ------------ prompts/get ------------- */
+        if (method == "prompts/get") {
+            proto::GetPromptRequest gpReq = req.at("params");
+            auto result = handleGet(gpReq);
+            return proto::makeJsonRpcResult(id, result);
+        }
+
+        return proto::makeJsonRpcError(id, -32601, "Method not found");
+    }
+    catch (const std::exception& e) {
+        return proto::makeJsonRpcError(id, -32603, e.what());
+    }
 }
 
-/* ---------- prompts/list ---------- */
-json PromptService::listPrompts(const std::string& id,const json&){
-    json arr = json::array();
-    for(auto& p: store_.all()){
-        arr.push_back({ {"name",p.name}, {"description",p.description}, {"arguments",p.arguments} });
-    }
-    return { {"jsonrpc","2.0"},{"id",id},{"result", { {"prompts", arr } } } };
+/* ===================================================================== */
+/*                              prompts/list                             */
+/* ===================================================================== */
+proto::ListPromptsResult PromptService::handleList() const
+{
+    proto::ListPromptsResult res;
+    res.prompts = store_.listTemplates();   // meta 列表
+    return res;
 }
 
-/* ---------- prompts/get ---------- */
-json PromptService::getPrompt(const std::string& id,const json& params){
-    const std::string name = params.at("name");
-    const auto* tpl = store_.find(name);
-    if(!tpl) return make_error(id, -32000, "prompt not found");
+/* ===================================================================== */
+/*                               prompts/get                             */
+/* ===================================================================== */
+proto::GetPromptResult
+PromptService::handleGet(const proto::GetPromptRequest& req)
+{
+    /* MCP 允许没有 arguments 字段；将其视为空 map */
+    std::map<std::string,std::string> args = req.params.arguments.value_or(std::map<std::string,std::string>{});
 
-    // 1. 模板渲染
-    inja::Environment env;
-    json context = params.value("arguments", json::object());
-    // json rendered = env.render_json(tpl->messages.dump(), context);
-    // json rendered = env.render_json(tpl->messages, context);
+    // (
+    //     req.params.arguments.begin(), req.arguments.end());
+    std::unordered_map<std::string, std::string> args_map(args.begin(), args.end());
+    auto filled = store_.renderPrompt(req.params.name, args_map);
+    return filled.data;          // 即 {description, messages}
+}
 
-    json rendered = tpl_.renderJson(tpl->messages, context);
+/* ===================================================================== */
+/*                   notifications/prompts/list_changed                   */
+/* ===================================================================== */
+void PromptService::fireListChanged() const
+{
+    if (!notify_) return;
 
-    // 2. 消息装配 (处理多模态占位符 → Content)
-    json msgs = json::array();
-    for(const auto& m : rendered){
-        std::string role = m.at("role");
-        std::string val  = m.at("content").get<std::string>();
-        auto pm = mma_.assemble(role, val);
-        msgs.push_back(pm);
-    }
-
-    json result = { {"messages", msgs}, {"description", tpl->description} };
-    return { {"jsonrpc","2.0"},{"id",id},{"result", result} };
+    json note = {
+        {"jsonrpc","2.0"},
+        {"method","notifications/prompts/list_changed"},
+        {"params", json::object() }
+    };
+    notify_(note);
 }

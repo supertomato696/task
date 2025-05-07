@@ -41,7 +41,7 @@ inline void from_json(const nlohmann::json& j, Role& role) {
  *  Annotations  (可选)
  * -----------------------------------------------------------*/
 struct Annotations {
-    std::vector<std::string> audience;          // 可为空
+    std::vector<Role> audience;          // 可为空
     std::optional<double>    priority;          // 0‑1
 };
 // NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Annotations, audience, priority);
@@ -50,7 +50,11 @@ struct Annotations {
 inline void to_json(nlohmann::json& j, const Annotations& a) {
     j = nlohmann::json{};  // 清空初始对象
     j["audience"] = a.audience; // 始终序列化 audience，哪怕是空的
-    if (a.priority) {
+    // if (a.priority) {
+    //     j["priority"] = *a.priority;
+    // }
+    // 仅在值有效时序列化 priority
+    if (a.priority && *a.priority >= 0.0 && *a.priority <= 1.0) {
         j["priority"] = *a.priority;
     }
 }
@@ -66,7 +70,7 @@ inline void from_json(const nlohmann::json& j, Annotations& a) {
 
     // priority 是可选的
     if (j.contains("priority") && j["priority"].is_number()) {
-        double val = j["priority"].get<double>();
+        const double val = j["priority"].get<double>();
         if (val >= 0.0 && val <= 1.0) {
             a.priority = val;
         } else {
@@ -85,6 +89,7 @@ inline void from_json(const nlohmann::json& j, Annotations& a) {
     std::string name;                   // [必填] 参数名称
     std::optional<std::string> description; // [可选] 参数描述
     bool required = false;              // [必填] 是否必须提供
+
 };
 
 // 重命名/修改 PromptInfo 为 Prompt

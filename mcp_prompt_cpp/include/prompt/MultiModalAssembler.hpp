@@ -1,36 +1,26 @@
-// include/prompt/MultiModalAssembler.hpp
+include/prompt/MultiModalAssembler.hpp
+
 #pragma once
-#include "protocol/McpContent.hpp"
-#include <vector>
+#include "protocol/McpContent.hpp"          // PromptMessage / TextContent / …
 #include <string>
 
-
-namespace mcp {
+namespace mcp::prompt {
 
 class MultiModalAssembler {
 public:
-//    /** Convert "{{uri}}" or "{{text}}" placeholder *value* into proper Content object */
-//    protocol::PromptMessage assemble(const std::string& role,
-//                                     const std::string& raw);
-
-    /** 给定占位符原始字符串 (来自 prompt 模板渲染后) 解析成 PromptMessage */
+    /** 把 raw 字符串转成 PromptMessage（含强类型 content） */
     protocol::PromptMessage assemble(const std::string& role,
-                                     const std::string& rawVal);
+                                     const std::string& raw) const;
 
-  private:
-    // heuristic: detect scheme or file suffix
-    static bool isUri(const std::string& v);
-    static bool isAudioExt(const std::string& p);        // ★ 新增
-    static bool isImageDataUri(const std::string& v);
-    static std::string toMime(const std::string& ext);
-    static std::string b64(const std::string& bin);
+private:
+    /* helpers */
+    static bool isUri       (const std::string& s);
+    static bool isDataImage (const std::string& s);
+    static bool isAudioFile (const std::string& path);
+    static std::string mimeFromExt (const std::string& ext);
 
-    static std::string readFileB64(const std::string& path);    // 统一 base64
-
-  private:
-    protocol::PromptMessage makeText (const std::string&);
-    protocol::PromptMessage makeImage(const std::string& uri);
-    protocol::PromptMessage makeEmbeddedResource(const std::string& uri);
+    /* file → base64 */
+    static std::string readFileB64(const std::string& path);
 };
 
-}
+} // namespace

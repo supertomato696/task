@@ -209,4 +209,44 @@ inline void from_json(const json& j, JSONRPCMessage& m) {
 }
 
 
+    /* 本项目用了 string / integer 两类 ID，统一存成 nlohmann::json */
+using JsonRpcId = nlohmann::json;
+using json      = nlohmann::json;
+
+/* ------------------------------------------------------------------ */
+/*  makeJsonRpcResult()                                               */
+/* ------------------------------------------------------------------ */
+template<typename ResultT>
+inline json makeJsonRpcResult(const JsonRpcId& id, const ResultT& result)
+{
+    return json{
+        {"jsonrpc", "2.0"},
+        {"id",      id},
+        {"result",  result}
+    };
+}
+
+/* ------------------------------------------------------------------ */
+/*  makeJsonRpcError()                                                */
+/* ------------------------------------------------------------------ */
+template<typename DataT = std::nullptr_t>
+inline json makeJsonRpcError(const JsonRpcId& id,
+                             int               code,
+                             const std::string& message,
+                             const DataT&       data = nullptr)
+{
+    json err = {
+        {"code",    code},
+        {"message", message}
+    };
+    if constexpr(!std::is_same_v<DataT,std::nullptr_t>)
+        err["data"] = data;
+
+    return json{
+        {"jsonrpc", "2.0"},
+        {"id",      id},
+        {"error",   std::move(err)}
+    };
+}
+
 }

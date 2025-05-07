@@ -80,21 +80,57 @@ inline void from_json(const json& j, ReadResourceRequest& r) {
     j.at("params").get_to(r.params);
 }
 
-struct ReadResourceResult {
+    // ===== ReadResourceResult 修正实现 =====
+    struct ReadResourceResult {
     std::optional<json> _meta;
-    std::vector<ResourceContents> contents;
+    std::vector<std::variant<TextResourceContents, BlobResourceContents>> contents;
 };
 
-inline void to_json(json& j, const ReadResourceResult& r) {
-    j = json{};
-    if (r._meta)     j["_meta"]    = *r._meta;
-    j["contents"]   = r.contents;
-}
+    inline void to_json(json& j, const ReadResourceResult& r) {
+        j = json{};
+        if (r._meta) j["_meta"] = *r._meta;
 
-inline void from_json(const json& j, ReadResourceResult& r) {
-    if (j.contains("_meta")) j.at("_meta").get_to(r._meta);
-    j.at("contents").get_to(r.contents);
-}
+        // 手动序列化 variant 数组
+        j["contents"] = json::array();
+        for (const auto& content : r.contents) {
+            std::visit([&j](auto&& arg) {
+                j.back().push_back(arg); // 利用各类型的 to_json 实现
+                // j["content"].push_back(arg);
+            }, content);
+        }
+    }
+
+    inline void from_json(const json& j, ReadResourceResult& r) {
+        if (j.contains("_meta")) j.at("_meta").get_to(r._meta);
+
+        // 手动反序列化 variant 数组
+        for (const auto& item : j.at("contents")) {
+            if (item.contains("text")) {
+                r.contents.emplace_back(item.get<TextResourceContents>());
+            } else if (item.contains("blob")) {
+                r.contents.emplace_back(item.get<BlobResourceContents>());
+            } else {
+                // throw json::parse_error::create(501, "Invalid resource content type", &item);
+            }
+        }
+    }
+
+
+// struct ReadResourceResult {
+//     std::optional<json> _meta;
+//     std::vector<ResourceContents> contents;
+// };
+//
+// inline void to_json(json& j, const ReadResourceResult& r) {
+//     j = json{};
+//     if (r._meta)     j["_meta"]    = *r._meta;
+//     j["contents"]   = r.contents;
+// }
+//
+// inline void from_json(const json& j, ReadResourceResult& r) {
+//     if (j.contains("_meta")) j.at("_meta").get_to(r._meta);
+//     j.at("contents").get_to(r.contents);
+// }
 
 
 

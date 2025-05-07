@@ -1,34 +1,49 @@
-
 #pragma once
-#include <inja/inja.hpp>
-#include <nlohmann/json.hpp>
+#include <unordered_map>
+#include <string>
+#include <regex>
 
 namespace mcp::prompt {
 
-/* 一个轻量封装，便于统一替换 / Mock */
+/**
+ *  将 {{name}} 占位符替换为实参。
+ *  - 未找到对应实参时占位符原样保留
+ *  - 不支持复杂表达式，仅简单 key
+ */
+ 
 class TemplateEngine {
 public:
-    TemplateEngine() = default;
-
-    /** 渲染任意 JSON (字符串里可含 {{var}}) */
-    nlohmann::json renderJson(const nlohmann::json& tpl,
-                              const nlohmann::json& context = nlohmann::json::object()) const
+    static std::string render(const std::string& tpl,
+                              const std::unordered_map<std::string,std::string>& args)
     {
-        //return env_.render_json(tpl, context);
-        #if defined(INJA_VERSION_MAJOR) && (INJA_VERSION_MAJOR > 3 || (INJA_VERSION_MAJOR==3 && INJA_VERSION_MINOR>=4))
-        return env_.render_json(tpl, context);          // 新接口 (>=3.4)
-        #else
-        return nlohmann::json::parse(env_.render(tpl.dump(), context)); // 兼容旧版
-        #endif
+        static const std::regex re(R"(\{\{\s*([a-zA-Z0-9_]+)\s*\}\})");
+
+        std::string out;
+        size_t last = 0;
+        for (auto it = std::sregex_iterator(tpl.begin(), tpl.end(), re);
+             it != std::sregex_iterator(); ++it)
+        {
+            out.append(tpl.substr(last, it->position() - last));
+
+            std::string key = (*it)[1];
+            auto f = args.find(key);
+            out.append(f == args.end() ? it->str() : f->second);
+
+            last = it->position() + it->length();
+        }
+        out.append(tpl.substr(last));
+        return out;
     }
 
-    /** 渲染文本模板 */
-    std::string renderText(const std::string& tpl,
-                           const nlohmann::json& context) const
-    {   return env_.render(tpl, context); }
+//     std::string render(const std::string& tpl, const std::unordered_map<std::string, std::string>& args) {
+//     // 使用 fmt 库来处理字符串替换
+//     std::string result = tpl;
+//     for (const auto& [key, value] : args) {
+//         result = fmt::format(result, fmt::arg(key, value));
+//     }
+//     return result;
+// }
 
-private:
-    mutable inja::Environment env_;
 };
 
-} // namespace mcp::prompt
+} // namespace
