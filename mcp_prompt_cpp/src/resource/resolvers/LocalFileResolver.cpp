@@ -5,64 +5,92 @@
 
 using namespace mcp::resource;
 namespace fs = std::filesystem;
-using json = nlohmann::json;
+using protocol::Resource;
+using protocol::ResourceContents;
 
-static std::string base64(const std::string& bin){
-    // std::string out; out.resize(4*((bin.size()+2)/3));
-    size_t len = 4*((bin.size()+2)/3);
-    std::string out(len,'\0');
-    EVP_EncodeBlock(reinterpret_cast<unsigned char*>(&out[0]),
-                    reinterpret_cast<const unsigned char*>(bin.data()), bin.size());
+/* -------- base64 helper -------- */
+static std::string b64(const std::string& bin)
+{
+    std::string out;
+    out.resize(4 * ((bin.size() + 2) / 3));
+    int len = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(out.data()),
+                              reinterpret_cast<const unsigned char*>(bin.data()),
+                              static_cast<int>(bin.size()));
+    out.resize(len);
     return out;
 }
 
-LocalFileResolver::LocalFileResolver(std::string root):root_(std::move(root)){}
+/* ------------------------------------------------------------------ */
+LocalFileResolver::LocalFileResolver(fs::path root)
+: root_(std::move(root)) {}
 
-bool LocalFileResolver::accepts(const std::string& uri) const{
-    return uri.rfind("file://",0)==0;
+/* ------------------------------------------------------------------ */
+bool LocalFileResolver::accepts(const std::string& uri) const
+{
+    return uri.rfind("file://", 0) == 0;
 }
 
-json LocalFileResolver::read(const std::string& uri){
-    std::string path = uri.substr(7);
-    fs::path p(path);
-    // 大小写敏感，若文件是 .TXT 会走 blob 路径；建议 tolower。
-    bool isText = p.extension()==".txt" || p.extension()==".json" || p.extension()==".md";
+/* ------------------------------------------------------------------ */
+std::vector<ResourceContents>
+LocalFileResolver::read(const std::string& uri)
+{
+    if(!accepts(uri))
+        throw std::invalid_argument("LocalFileResolver uri scheme mismatch");
 
-    std::ifstream f(path, std::ios::binary);
-    std::string buf{std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>()};
+    fs::path p = uri.substr(7);
+    if(!fs::exists(p) || !fs::is_regular_file(p))
+        throw std::runtime_error("file not exist");
 
-    if(isText){
-        return json::array({{
-            {"uri",uri},{"mimeType",toMime(p)},{"text",buf}
-        }});
+    std::ifstream f(p, std::ios::binary);
+    std::string buf{std::istreambuf_iterator<char>(f),{}};
+
+    ResourceContents rc;
+    rc.uri      = uri;
+    rc.mimeType = toMime(p);
+
+    if (isText(rc.mimeType))
+        rc.data = buf;                 // text
+    else
+        rc.data = b64(buf);            // blob (b64)
+
+    return { std::move(rc) };
+}
+
+/* ------------------------------------------------------------------ */
+std::vector<Resource> LocalFileResolver::list()
+{
+    std::vector<Resource> vec;
+    for(auto &entry : fs::recursive_directory_iterator(root_))
+    {
+        if(!entry.is_regular_file()) continue;
+
+        Resource r;
+        r.uri      = "file://" + entry.path().string();
+        r.name     = entry.path().filename().string();
+        r.mimeType = toMime(entry.path());
+        r.size     = entry.file_size();
+        vec.push_back(std::move(r));
     }
-    return json::array({{
-        {"uri",uri},{"mimeType",toMime(p)},{"blob",base64(buf)}
-    }});
+    return vec;
 }
 
-std::vector<json> LocalFileResolver::list(){
-    std::vector<json> v;
-    for(auto& p: fs::recursive_directory_iterator(root_)){
-        if(p.is_regular_file()){
-            std::string uri = "file://"+p.path().string();
-            v.push_back({
-                {"name",p.path().filename().string()},
-                {"uri",uri},
-                {"mimeType", toMime(p.path())},
-                {"size", p.file_size()}
-            });
-        }
-    }
-    return v;
-}
-
-std::string LocalFileResolver::toMime(const fs::path& p){
+/* ------------------------------------------------------------------ */
+std::string LocalFileResolver::toMime(const fs::path& p) const
+{
     auto ext = p.extension().string();
-    std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
-    if(ext==".txt") return "text/plain";
-    if(ext==".json")return "application/json";
-    if(ext==".png") return "image/png";
-    if(ext==".wav") return "audio/wav";
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    if(ext == ".txt" ) return "text/plain";
+    if(ext == ".md"  ) return "text/markdown";
+    if(ext == ".json") return "application/json";
+    if(ext == ".png" ) return "image/png";
+    if(ext == ".jpg" || ext == ".jpeg") return "image/jpeg";
+    if(ext == ".wav" ) return "audio/wav";
+    if(ext == ".mp3" ) return "audio/mpeg";
     return "application/octet-stream";
+}
+
+bool LocalFileResolver::isText(const std::string& mime) const
+{
+    return mime.starts_with("text/") || mime == "application/json";
 }

@@ -15,6 +15,7 @@ bool PromptStore::addTemplate(PromptTemplate t)
     bool isNew = templates_.find(t.meta.name) == templates_.end();
     templates_[t.meta.name] = std::move(t);
     filledCache_.clear();               // 模板变了，失效旧缓存
+    if (onChanged_) onChanged_();              // ★ 触发
     return isNew;
 }
 
@@ -22,7 +23,10 @@ bool PromptStore::removeTemplate(const std::string& name)
 {
     std::scoped_lock lk(mtx_);
     bool erased = templates_.erase(name) != 0;
-    if (erased) filledCache_.clear();
+    if (erased) {
+        filledCache_.clear();
+        if (onChanged_) onChanged_();          // ★ 触发
+    }
     return erased;
 }
 

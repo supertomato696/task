@@ -6,7 +6,11 @@ namespace proto = mcp::protocol;
 
 /* ---------- ctor ---------- */
 PromptService::PromptService(PromptStore& s, Notify n)
-    : store_(s), notify_(std::move(n)) {}
+    : store_(s), notify_(std::move(n)) 
+    {
+         /* ★ 当模板列表变化时自动发送 list_changed 通知 */
+    store_.setOnChanged([this](){ fireListChanged(); });
+    }
 
 /* ===================================================================== */
 /*                           JSON‑RPC dispatcher                         */
@@ -77,3 +81,21 @@ void PromptService::fireListChanged() const
     };
     notify_(note);
 }
+
+
+// PromptStore     store;
+// transport::AsioTcpTransport tr{9275};
+
+// PromptService   psvc(store, [&](const nlohmann::json& note){
+//     tr.send(note);                    // 所有通知都从这里发出去
+// });
+
+// tr.onMessage([&](const nlohmann::json& req){
+//     if (req["method"] == "prompts/list")
+//         tr.send( psvc.handleRpc(req) );
+//     // ...
+// });
+
+// /* 动态新增模板 */
+// store.addTemplate(newTpl);            // 客户端立刻收到 list_changed
+

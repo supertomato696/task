@@ -8,6 +8,7 @@
 #include <vector>
 #include <optional>
 #include <mutex>
+#include <functional>
 
 namespace mcp::prompt {
 
@@ -33,6 +34,7 @@ struct FilledPrompt {
  */
 class PromptStore {
 public:
+using OnChanged = std::function<void()>;      // ★ 新增
     /* ---------- 模板 ---------- */
     bool addTemplate (PromptTemplate t);            ///< insert/overwrite
     bool removeTemplate(const std::string& name);
@@ -50,6 +52,9 @@ public:
     /** 清空全部已渲染缓存（可选） */
     void clearFilledCache();
 
+     /* --------- 订阅变更 --------- */
+     void setOnChanged(OnChanged cb) { onChanged_ = std::move(cb); }  // ★ 新增
+
 private:
     /* 生成缓存 key = name + "|" + md5(sorted args) */
     static std::string makeKey(const std::string& name,
@@ -60,6 +65,7 @@ private:
     std::unordered_map<std::string, FilledPrompt>  filledCache_;
 
     mutable std::mutex mtx_;   ///< 粗粒度锁即可（在内存版）
+    OnChanged onChanged_;                         // ★ 新增
 };
 
 } // namespace
