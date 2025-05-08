@@ -47,3 +47,26 @@ public:
 };
 
 } // namespace
+
+// #pragma once
+#include <string>
+#include <unordered_map>
+
+namespace mcp::prompt::TemplateEngine {
+
+/* 仅支持 {{name}} 占位符的简单替换 */
+inline std::string render(std::string text,
+                          const std::unordered_map<std::string,std::string>& args)
+{
+    for(auto& [k,v] : args){
+        const std::string pat = "{{"+k+"}}";
+        std::size_t pos = 0;
+        while((pos = text.find(pat, pos)) != std::string::npos){
+            text.replace(pos, pat.size(), v);
+            pos += v.size();
+        }
+    }
+    return text;
+}
+
+} // namespace

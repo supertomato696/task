@@ -328,4 +328,97 @@ inline RequestId parseId(const json& j) {
     return {}; // empty
 }
 
+/* ------------------------------------------------------------------ */
+/*  JSON‑RPC "id" 支持三种形态：null / integer / string               */
+/* ------------------------------------------------------------------ */
+using Id = std::variant<std::monostate, int64_t, std::string>;
+
+/* 序列化 / 反序列化  */
+inline void to_json(json& j, const Id& id)
+{
+    std::visit([&](auto&& v){
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, std::monostate>)
+            j = nullptr;
+        else
+            j = v;
+    }, id);
+}
+
+inline void from_json(const json& j, Id& id)
+{
+    if(j.is_null())               id = std::monostate{};
+    else if(j.is_number_integer()) id = j.get<int64_t>();
+    else if(j.is_string())        id = j.get<std::string>();
+    else
+        throw std::runtime_error("invalid JSON‑RPC id");
+}
+
+/* ------------------------------------------------------------------ */
+/*  构造 Request / Result / Error                                      */
+/* ------------------------------------------------------------------ */
+inline json
+makeJsonRpcRequest(const Id& id,
+                   std::string_view method,
+                   json params = json::object())
+{
+    json req{
+        {"jsonrpc", "2.0"},
+        {"method",  method},
+        {"params",  std::move(params)}
+    };
+    if(!std::holds_alternative<std::monostate>(id))
+        req["id"] = id;
+    return req;
+}
+
+inline json
+makeJsonRpcResult(const Id& id, json result)
+{
+    return {
+        {"jsonrpc", "2.0"},
+        {"id",      id},
+        {"result",  std::move(result)}
+    };
+}
+
+inline json
+makeJsonRpcError(const Id& id,
+                 int        code,
+                 std::string message,
+                 json        data = json::object())
+{
+    json err{
+        {"code",    code},
+        {"message", std::move(message)}
+    };
+    if(!data.empty())
+        err["data"] = std::move(data);
+
+    return {
+        {"jsonrpc", "2.0"},
+        {"id",      id},
+        {"error",   std::move(err)}
+    };
+}
+
+/* ------------------------------------------------------------------ */
+/*  快捷解析：提取 id / method / params；若格式非法返回 false          */
+/* ------------------------------------------------------------------ */
+inline bool
+getBasicRequestFields(const json&  j,
+                      Id&          idOut,
+                      std::string& methodOut,
+                      json&        paramsOut)
+{
+    if(!j.is_object() || j.value("jsonrpc","") != "2.0" || !j.contains("method"))
+        return false;
+
+    methodOut = j["method"].get<std::string>();
+    paramsOut = j.value("params", json::object());
+    idOut     = j.value("id",     Id{std::monostate{}}).get<Id>();
+
+    return true;
+}
+
 }

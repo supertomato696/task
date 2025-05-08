@@ -230,4 +230,65 @@ inline void from_json(const json& j, ResourceUpdatedNotification& n) {
     j.at("params").at("uri").get_to(n.params.uri);
 }
 
+/* ------------------------------------------------------------------ */
+/* 基础分页参数（cursor 可为空）                                       */
+/* ------------------------------------------------------------------ */
+struct PaginatedParams {
+    std::optional<std::string> cursor;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PaginatedParams, cursor)
+
+/* ------------------------------------------------------------------ */
+/* resources/list                                                     */
+/* ------------------------------------------------------------------ */
+using ListResourcesParams = PaginatedParams;
+
+/* Result:                                                              
+     { resources:[Resource], nextCursor? }                              
+   Resource 类型已在 McpContent.hpp 里定义                              
+ */
+struct ListResourcesResult {
+    std::vector<Resource>  resources;
+    std::optional<std::string> nextCursor;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ListResourcesResult, resources, nextCursor)
+
+/* ------------------------------------------------------------------ */
+/* resources/templates/list  (同样复用 PaginatedParams)                */
+/* ------------------------------------------------------------------ */
+using ListResourceTemplatesParams = PaginatedParams;
+
+/* ------------------------------------------------------------------ */
+/* resources/read                                                      */
+/* ------------------------------------------------------------------ */
+struct ReadResourceParams {
+    std::string uri;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReadResourceParams, uri)
+
+struct ReadResourceResult {
+    std::vector<ResourceContents> contents;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReadResourceResult, contents)
+
+/* ------------------------------------------------------------------ */
+/* resources/subscribe & unsubscribe                                   */
+/* ------------------------------------------------------------------ */
+struct SubscribeParams {
+    std::string uri;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SubscribeParams, uri)
+
+using UnsubscribeParams = SubscribeParams;
+
+/* notifications/resources/updated  */
+struct ResourceUpdatedParams {
+    std::string uri;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ResourceUpdatedParams, uri)
+
+/* notifications/resources/list_changed 没有 params                    */
+struct EmptyParams {};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EmptyParams)
+
 }
