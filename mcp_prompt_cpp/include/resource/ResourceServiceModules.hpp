@@ -11,7 +11,7 @@
 #include <nlohmann/json.hpp>
 #include <asio.hpp>
 #include "protocol/McpContent.hpp"       // PromptMessage, TextResourceContents, BlobResourceContents, ResourceReference, EmbeddedResource
-//#include "Base64.hpp"          // Base64 encoder
+#include "Base64.hpp"          // Base64 encoder
 
 namespace mcp::resource {
 
@@ -202,7 +202,7 @@ private:
 
 } // namespace mcp::resource
 
-
+#include <prompt/TemplateEngine.hpp>
 // ===== MultimodalAssembler: 整合渲染和资源加载 =====
 namespace mcp::utils {
 
@@ -213,6 +213,8 @@ using mcp::protocol::ResourceReference;
 using mcp::protocol::TextContent;
 using mcp::protocol::ImageContent;
 using mcp::protocol::AudioContent;
+using mcp::prompt::TemplateEngine;
+using  namespace mcp::protocol;
 
 class MultimodalAssembler {
 public:

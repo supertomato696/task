@@ -14,6 +14,7 @@
 #include "resource/ResourceManager.hpp"
 
 #include <functional>
+#include <JsonRpc.hpp>
 
 namespace mcp::resource {
 
@@ -29,19 +30,20 @@ public:
 
 private:
     /* ---- 单个方法实现 ---- */
-    nlohmann::json onList          (const protocol::Id&,
+    nlohmann::json onList          (const protocol::RequestId&,
                                     const protocol::ListResourcesParams&);
 
-    nlohmann::json onTemplatesList (const protocol::Id&,
+    nlohmann::json onTemplatesList (const protocol::RequestId&,
                                     const protocol::PaginatedParams&);
 
-    nlohmann::json onRead          (const protocol::Id&,
+    nlohmann::json onRead          (const protocol::RequestId&,
                                     const protocol::ReadResourceParams&);
 
-    nlohmann::json onSubscribe     (const protocol::Id&,
-                                    const protocol::SubscribeParams&);
+    nlohmann::json onSubscribe(const protocol::RequestId &,
+                               const protocol::SubscribeParams &) {
+    }
 
-    nlohmann::json onUnsubscribe   (const protocol::Id&,
+    nlohmann::json onUnsubscribe   (const protocol::RequestId&,
                                     const protocol::UnsubscribeParams&);
 
     /* ---- 通知封装 ---- */

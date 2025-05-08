@@ -1,9 +1,11 @@
 #pragma once
-#include "resource/IResolver.hpp"
+#include "resource/resolvers/IResolver.hpp"
 #include <string>
-
+#include <vector>
+#include "protocol/McpContent.hpp"
 namespace mcp::resource {
 
+    // using protocol      = mcp::protocol;
 /**
  *  下载 http(s)://… 资源（GET）
  *  · list() 返回空，因无法枚举远程目录

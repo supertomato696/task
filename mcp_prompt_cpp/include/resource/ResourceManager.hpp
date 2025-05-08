@@ -8,7 +8,7 @@
  *
  *  Author:  architectural pass – 2025‑05‑07
  *****************************************************************************/
-#include "resource/IResolver.hpp"
+#include "resource/resolvers/IResolver.hpp"
 
 #include <unordered_map>
 #include <vector>

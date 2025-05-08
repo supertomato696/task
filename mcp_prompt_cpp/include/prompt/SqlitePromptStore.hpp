@@ -1,7 +1,8 @@
 #pragma once
-#include "prompt/PromptStore.hpp"          // 复用 PromptTemplate
+// #include "prompt/PromptStore.hpp"          // 复用 PromptTemplate
 #include <sqlite_modern_cpp.h>
 #include <mutex>
+#include <prompt/PromptTemplate.hpp>
 
 namespace mcp::prompt {
 

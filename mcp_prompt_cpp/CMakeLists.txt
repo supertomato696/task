@@ -87,9 +87,18 @@ target_sources(mcp_core
 # ---------------------------------------------------------------------
 # Server executable
 # ---------------------------------------------------------------------
-add_executable(mcp_promptd src/server_main.cpp)
-target_link_libraries(mcp_promptd PRIVATE mcp_core)
+#add_executable(mcp_promptd src/server_main.cpp)
+#target_link_libraries(mcp_promptd PRIVATE mcp_core)
+add_executable(mcp_promptd
+        src/server/InitializeService.cpp
+        src/server/Dispatcher.cpp
+        src/server_main.cpp)
 
+target_link_libraries(mcp_promptd PRIVATE
+        mcp_core           # Prompt/Resource/Tool 实现等
+        asio
+        Threads::Threads
+)
 # ---------------------------------------------------------------------
 # Client SDK
 # ---------------------------------------------------------------------

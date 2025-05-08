@@ -15,7 +15,7 @@ ResourceService::ResourceService(ResourceManager& rm, Notify n)
 /* ------------------------------------------------------------------ */
 json ResourceService::handle(const json& rpc)
 {
-    protocol::Id  id;
+    protocol::RequestId  id;
     std::string   method;
     json          params;
 
@@ -48,7 +48,7 @@ json ResourceService::handle(const json& rpc)
 
 /* ------------------------------------------------------------------ */
 /* resources/list */
-json ResourceService::onList(const protocol::Id& id,
+json ResourceService::onList(const protocol::RequestId& id,
                              const protocol::ListResourcesParams&)
 {
     protocol::ListResourcesResult res;
@@ -57,7 +57,7 @@ json ResourceService::onList(const protocol::Id& id,
 }
 
 /* resources/templates/list —— 支持分页 */
-json ResourceService::onTemplatesList(const protocol::Id& id,
+json ResourceService::onTemplatesList(const protocol::RequestId& id,
                                       const protocol::PaginatedParams& p)
 {
     constexpr std::size_t PAGE = 100;
@@ -78,7 +78,7 @@ json ResourceService::onTemplatesList(const protocol::Id& id,
 }
 
 /* resources/read */
-json ResourceService::onRead(const protocol::Id& id,
+json ResourceService::onRead(const protocol::RequestId& id,
                              const protocol::ReadResourceParams& p)
 {
     protocol::ReadResourceResult res;
@@ -87,14 +87,14 @@ json ResourceService::onRead(const protocol::Id& id,
 }
 
 /* subscribe / unsubscribe */
-json ResourceService::onSubscribe(const protocol::Id& id,
+json ResourceService::onSubscribe(const protocol::RequestId& id,
                                   const protocol::SubscribeParams& p)
 {
     rm_.subscribe(p.uri, [this](const std::string& u){ fireUpdated(u); });
     return protocol::makeJsonRpcResult(id, protocol::Result{});
 }
 
-json ResourceService::onUnsubscribe(const protocol::Id& id,
+json ResourceService::onUnsubscribe(const protocol::RequestId& id,
                                     const protocol::UnsubscribeParams& p)
 {
     rm_.unsubscribe(p.uri);

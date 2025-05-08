@@ -1,5 +1,5 @@
 #pragma once
-#include "resource/IResolver.hpp"
+#include "resource/resolvers/IResolver.hpp"
 #include <filesystem>
 
 namespace mcp::resource {

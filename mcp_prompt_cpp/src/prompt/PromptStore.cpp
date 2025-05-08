@@ -3,6 +3,8 @@
 #include <sstream>
 #include <iomanip>
 
+#include <prompt/TemplateEngine.hpp>
+
 using namespace mcp::prompt;
 namespace proto = mcp::protocol;
 

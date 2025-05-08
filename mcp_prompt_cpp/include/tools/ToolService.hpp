@@ -31,7 +31,7 @@ public:
 
 private:
     /* 内部分发 —— 对应 MCP 方法 */
-    nlohmann::json onList(const protocol::Id& id,
+    nlohmann::json onList(const mcp::protocol::Id& id,
                           const protocol::PaginatedParams& p);
 
     nlohmann::json onCall(const protocol::Id& id,

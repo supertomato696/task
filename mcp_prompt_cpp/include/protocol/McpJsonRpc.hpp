@@ -249,4 +249,83 @@ inline json makeJsonRpcError(const JsonRpcId& id,
     };
 }
 
+    using RequestId = std::variant<std::monostate, int64_t, std::string>;
+
+/* tiny helper 把 Id → json */
+inline json idToJson(const RequestId& id) {
+    return std::visit([](auto&& v) -> json {
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, std::monostate>) {
+            return nullptr; // 或 json::object() 根据协议要求
+        } else {
+            return json(v); // 正常处理 int/string
+        }
+    }, id);
+}
+
+
+    inline void to_json(nlohmann::json& j, const RequestId& id) {
+    j = std::visit([](auto&& v) -> nlohmann::json {
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, std::monostate>) {
+            return nullptr; // 或 json::object() 根据协议要求
+        } else {
+            return nlohmann::json(v); // 正常处理 int/string
+        }
+    }, id);
+}
+
+    /* -------  id 解析工具  ------- */
+    inline void from_json(const nlohmann::json& j, RequestId& id) {
+    if (j.contains("id")) {
+        if (j["id"].is_number_integer()) {
+            id = j["id"].get<int64_t>();
+        } else if (j["id"].is_string()) {
+            id = j["id"].get<std::string>();
+        } else {
+            throw std::invalid_argument("Invalid type for 'id' field");
+        }
+    } else {
+        id = {}; // empty (std::monostate)
+    }
+}
+
+
+/* -------  构造器  ------- */
+inline json makeRequest(const RequestId& id,
+                        const std::string& method,
+                        json params = json::object())
+{
+    json j = { {"jsonrpc","2.0"}, {"method",method}, {"params",std::move(params)} };
+     json idJson = idToJson(id);
+    if (!idJson.is_null()) { // ✅ 更安全的空值检查
+        j["id"] = std::move(idJson);
+    }
+    return j;
+ //   if(!std::holds_alternative<std::monostate>(id))
+  //      j["id"] = idToJson(id);
+  //  return j;
+}
+
+inline json makeResult(const RequestId& id, json result = json::object()){
+        return { {"jsonrpc","2.0"},
+             {"id",   idToJson(id)},
+             {"result", std::move(result)} };
+}
+
+inline json makeError (const RequestId& id, int code, const std::string& msg){
+    return { {"jsonrpc","2.0"},
+             {"id",   idToJson(id)},
+             {"error", {{"code",code},{"message",msg}} } };
+}
+
+/* -------  id 解析工具  ------- */
+inline RequestId parseId(const json& j) {
+    if(j.contains("id")){
+        if(j["id"].is_number_integer()) return j["id"].get<int64_t>();
+        if(j["id"].is_string())         return j["id"].get<std::string>();
+    }
+    return {}; // empty
+}
+
 }
