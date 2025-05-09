@@ -5,7 +5,7 @@
 
 using namespace mcp::resource;
 namespace fs = std::filesystem;
-using protocol::ResourceContents;
+using mcp::protocol::ResourceContents;
 
 /* ---------- helpers ---------- */
 std::string HttpResolver::b64(const std::string& bin)

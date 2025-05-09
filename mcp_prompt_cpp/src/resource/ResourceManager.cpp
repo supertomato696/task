@@ -4,6 +4,8 @@
 using namespace mcp::resource;
 namespace fs = std::filesystem;
 
+namespace  protocol = mcp::protocol;
+
 /* ------------------------------------------------------------------ */
 void ResourceManager::registerResolver(std::unique_ptr<IResolver> r)
 {

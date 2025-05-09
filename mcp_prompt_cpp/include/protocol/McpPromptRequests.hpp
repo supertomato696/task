@@ -114,34 +114,68 @@ inline void from_json(const json& j, ListPromptsResult& r) {
 
 
 // ===== PromptListChangedNotification =====
-
-struct PromptListChangedNotification {
+    struct PromptListChangedNotification {
     std::string method = "notifications/prompts/list_changed";
     struct Params {
         std::optional<json> _meta;
-    } params;
+        json additionalProperties; // 存储其他属性
+    };
+    std::optional<Params> params; // 保持可选性
 };
 
+    // Params 序列化
     inline void to_json(json& j, const PromptListChangedNotification::Params& p) {
-        j = json::object();
+        j = p.additionalProperties;
         if (p._meta) j["_meta"] = *p._meta;
     }
 
     inline void from_json(const json& j, PromptListChangedNotification::Params& p) {
-        if (j.contains("_meta")) j.at("_meta").get_to(p._meta);
+        p.additionalProperties = j;
+        if (j.contains("_meta")) {
+            p._meta = j["_meta"];
+            p.additionalProperties.erase("_meta");
+        }
     }
 
+    // Notification 序列化
     inline void to_json(json& j, const PromptListChangedNotification& n) {
-        j = json{
-            {"method", n.method},
-            {"params", n.params}  // 自动调用Params的序列化
-        };
+        j = {{"method", n.method}};
+        if (n.params) j["params"] = *n.params;
     }
 
     inline void from_json(const json& j, PromptListChangedNotification& n) {
         j.at("method").get_to(n.method);
-        j.at("params").get_to(n.params);
+        if (j.contains("params")) {
+            j.at("params").get_to(n.params.emplace());
+        }
     }
+// struct PromptListChangedNotification {
+//     std::string method = "notifications/prompts/list_changed";
+//     struct Params {
+//         std::optional<json> _meta;
+//     } params;
+// };
+//
+//     inline void to_json(json& j, const PromptListChangedNotification::Params& p) {
+//         j = json::object();
+//         if (p._meta) j["_meta"] = *p._meta;
+//     }
+//
+//     inline void from_json(const json& j, PromptListChangedNotification::Params& p) {
+//         if (j.contains("_meta")) j.at("_meta").get_to(p._meta);
+//     }
+//
+//     inline void to_json(json& j, const PromptListChangedNotification& n) {
+//         j = json{
+//             {"method", n.method},
+//             {"params", n.params}  // 自动调用Params的序列化
+//         };
+//     }
+//
+//     inline void from_json(const json& j, PromptListChangedNotification& n) {
+//         j.at("method").get_to(n.method);
+//         j.at("params").get_to(n.params);
+//     }
 
 // {
 //     "method": "notifications/prompts/list_changed",
@@ -167,25 +201,6 @@ inline void from_json(const json& j, PromptReference& r) {
     j.at("name").get_to(r.name);
     // type 固定，无需读入
 }
-
-//// ===== PromptListChangedNotification =====
-//// 服务器通知：提示列表已变更
-//struct PromptListChangedNotification {
-//    std::string method{"notifications/prompts/list_changed"};
-//    std::optional<json> _meta;
-//};
-//
-//inline void to_json(json& j, const PromptListChangedNotification& n) {
-//    j = json{{"method", n.method}};
-//    json params = json::object();
-//    if (n._meta) params["_meta"] = *n._meta;
-//    j["params"] = params;
-//}
-//inline void from_json(const json& j, PromptListChangedNotification& n) {
-//    if (j.contains("params") && j["params"].contains("_meta"))
-//        j["params"].at("_meta").get_to(n._meta);
-//}
-
 
 
 }

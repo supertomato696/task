@@ -10,30 +10,35 @@ using json = nlohmann::json;
 
 namespace mcp::protocol {
 // ===== ListResourcesRequest / ListResourcesResult =====
+    struct ListResourcesRequest {
+        std::string method = "resources/list";
+        struct Params {
+            std::optional<std::string> cursor;
+        };
+        std::optional<Params> params; // 可选参数
+    };
 
-struct ListResourcesRequest {
-    std::string method = "resources/list";
-    struct Params {
-        std::optional<std::string> cursor;
-    } params;
-};
+    // 序列化方法调整
+    inline void to_json(json& j, const ListResourcesRequest::Params& p) {
+        j = json{};
+        if (p.cursor) j["cursor"] = *p.cursor;
+    }
 
-inline void to_json(json& j, const ListResourcesRequest::Params& p) {
-    j = json{};
-    if (p.cursor) j["cursor"] = *p.cursor;
-}
+    inline void from_json(const json& j, ListResourcesRequest::Params& p) {
+        if (j.contains("cursor")) j.at("cursor").get_to(p.cursor);
+    }
 
-inline void from_json(const json& j, ListResourcesRequest::Params& p) {
-    if (j.contains("cursor")) j.at("cursor").get_to(p.cursor);
-}
+    inline void to_json(json& j, const ListResourcesRequest& r) {
+        j = {{"method", r.method}};
+        if (r.params) j["params"] = *r.params; // 可选序列化
+    }
 
-inline void to_json(json& j, const ListResourcesRequest& r) {
-    j = json{{"method", r.method}, {"params", r.params}};
-}
-
-inline void from_json(const json& j, ListResourcesRequest& r) {
-    j.at("params").get_to(r.params);
-}
+    inline void from_json(const json& j, ListResourcesRequest& r) {
+        j.at("method").get_to(r.method);
+        if (j.contains("params")) {
+            j.at("params").get_to(r.params.emplace());
+        }
+    }
 
 struct ListResourcesResult {
     std::optional<json> _meta;
@@ -202,21 +207,40 @@ inline void from_json(const json& j, UnsubscribeRequest& r) { j.at("params").get
 // ===== Notifications =====
 
 // ResourceListChangedNotification
-struct ResourceListChangedNotification {
+    struct ResourceListChangedNotification {
     std::string method = "notifications/resources/list_changed";
-    std::optional<json> _meta;
+    struct Params {
+        std::optional<json> _meta;
+        json additionalProperties; // 存储其他属性
+    };
+    std::optional<Params> params; // 可选参数
 };
-inline void to_json(json& j, const ResourceListChangedNotification& n) {
-    j = json{{"method", n.method}};
-    json p = json{};
-    if (n._meta) p["_meta"] = *n._meta;
-    j["params"] = p;
-}
-inline void from_json(const json& j, ResourceListChangedNotification& n) {
-    if (j.contains("params") && j["params"].contains("_meta"))
-        j["params"].at("_meta").get_to(n._meta);
-}
 
+    // 序列化方法
+    inline void to_json(json& j, const ResourceListChangedNotification::Params& p) {
+        j = p.additionalProperties;
+        if (p._meta) j["_meta"] = *p._meta;
+    }
+
+    inline void from_json(const json& j, ResourceListChangedNotification::Params& p) {
+        p.additionalProperties = j;
+        if (j.contains("_meta")) {
+            p._meta = j["_meta"];
+            p.additionalProperties.erase("_meta");
+        }
+    }
+
+    inline void to_json(json& j, const ResourceListChangedNotification& n) {
+        j = {{"method", n.method}};
+        if (n.params) j["params"] = *n.params; // 可选序列化 params
+    }
+
+    inline void from_json(const json& j, ResourceListChangedNotification& n) {
+        j.at("method").get_to(n.method);
+        if (j.contains("params")) {
+            j.at("params").get_to(n.params.emplace());
+        }
+    }
 // ResourceUpdatedNotification
 struct ResourceUpdatedNotification {
     std::string method = "notifications/resources/updated";
@@ -236,7 +260,21 @@ inline void from_json(const json& j, ResourceUpdatedNotification& n) {
 struct PaginatedParams {
     std::optional<std::string> cursor;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PaginatedParams, cursor)
+// NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PaginatedParams, cursor)
+    inline void to_json(json& j, const PaginatedParams& p) {
+        j = json{};
+        if (p.cursor) {
+            j["cursor"] = *p.cursor; // 仅当有值时序列化
+        }
+    }
+
+    inline void from_json(const json& j, PaginatedParams& p) {
+        if (j.contains("cursor") && !j["cursor"].is_null()) {
+            j.at("cursor").get_to(p.cursor.emplace());
+        } else {
+            p.cursor.reset();
+        }
+    }
 
 /* ------------------------------------------------------------------ */
 /* resources/list                                                     */
@@ -247,11 +285,7 @@ using ListResourcesParams = PaginatedParams;
      { resources:[Resource], nextCursor? }                              
    Resource 类型已在 McpContent.hpp 里定义                              
  */
-struct ListResourcesResult {
-    std::vector<Resource>  resources;
-    std::optional<std::string> nextCursor;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ListResourcesResult, resources, nextCursor)
+
 
 /* ------------------------------------------------------------------ */
 /* resources/templates/list  (同样复用 PaginatedParams)                */
@@ -266,10 +300,7 @@ struct ReadResourceParams {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReadResourceParams, uri)
 
-struct ReadResourceResult {
-    std::vector<ResourceContents> contents;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ReadResourceResult, contents)
+
 
 /* ------------------------------------------------------------------ */
 /* resources/subscribe & unsubscribe                                   */
@@ -289,6 +320,15 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ResourceUpdatedParams, uri)
 
 /* notifications/resources/list_changed 没有 params                    */
 struct EmptyParams {};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EmptyParams)
+// NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EmptyParams)
+    inline void to_json(json& j, const EmptyParams&) {
+        j = json::object(); // 生成空 JSON 对象 {}
+    }
 
+    inline void from_json(const json& j, EmptyParams&) {
+        if (!j.empty()) {
+            // 可选的协议容错处理：抛出异常或忽略额外字段
+            // throw json::parse_error::create(501, "Unexpected fields in EmptyParams", &j);
+        }
+    }
 }

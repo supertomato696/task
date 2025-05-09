@@ -450,7 +450,7 @@ inline void from_json(const json& j, EmbeddedResource& e) {
 
 /* ---------- PromptMessage ---------- */
 struct PromptMessage {
-    std::string role;   // "user" / "assistant"
+    Role role;   // "user" / "assistant"
 
     std::variant<TextContent, ImageContent, AudioContent, EmbeddedResource> content;
 };

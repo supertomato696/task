@@ -100,8 +100,13 @@ NLOHMANN_JSON_SERIALIZE_ENUM(LoggingLevel, {
     {LoggingLevel::error, "error"},
     {LoggingLevel::info, "info"},
     {LoggingLevel::notice, "notice"},
-    {LoggingLevel::warning, "warning"}
+    {LoggingLevel::warning, "warning"},
+    {LoggingLevel(), nullptr}  // 如果未匹配到，返回默认枚举值
 })
+
+    std::string loggingLevelToString(LoggingLevel level) {
+    return nlohmann::json(level).get<std::string>();
+}
 
 // SetLevelRequest
 struct SetLevelRequest {

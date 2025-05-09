@@ -4,6 +4,8 @@ using namespace mcp;
 using namespace mcp::resource;
 using json = nlohmann::json;
 
+namespace  protocol = mcp::protocol;
+
 /* ------------------------------------------------------------------ */
 ResourceService::ResourceService(ResourceManager& rm, Notify n)
 : rm_(rm), notify_(std::move(n))

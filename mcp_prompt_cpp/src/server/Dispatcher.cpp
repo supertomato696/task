@@ -30,7 +30,7 @@ json Dispatcher::handle(const json& req)
         if(method == "initialize")        return init_.handle(req);
         if(method == "ping")              return protocol::makeJsonRpcResult(id, json::object());
 
-        if(method.rfind("prompts/",0)==0)    return prompt_.handle(req);
+        if(method.rfind("prompts/",0)==0)    return prompt_.handleRpc(req);
         if(method.rfind("resources/",0)==0)  return res_.handle(req);
         if(method.rfind("tools/",0)==0)      return tool_.handle(req);
 

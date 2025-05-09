@@ -133,16 +133,17 @@
 #include "protocol/McpContent.hpp"          // PromptMessage / TextContent …
 #include "protocol/McpPromptRequests.hpp"   // Prompt / GetPromptResult
 #include "prompt/MultiModalAssembler.hpp"   // 富媒体转换
+#include "prompt/PromptTemplate.hpp"
 
 namespace mcp::prompt {
 
 /* ------------------------------------------------------------------ */
 /*  PromptTemplate —— 纯“模板”，未渲染                                */
 /* ------------------------------------------------------------------ */
-struct PromptTemplate {
-    protocol::Prompt                         meta;      // name / description / arguments[]
-    std::vector<protocol::PromptMessage>     messages;  // 可包含 {{arg}} 占位
-};
+// struct PromptTemplate {
+//     protocol::Prompt                         meta;      // name / description / arguments[]
+//     std::vector<protocol::PromptMessage>     messages;  // 可包含 {{arg}} 占位
+// };
 
 /* ------------------------------------------------------------------ */
 /*  FilledPrompt —— render 后的结果（可直接作为 prompts/get Result）   */

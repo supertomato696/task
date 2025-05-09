@@ -4,12 +4,14 @@
 using namespace mcp::tools;
 using json = nlohmann::json;
 
+namespace  protocol = mcp::protocol;
+
 /* ---------- say_text {"text":string} --------------------------- */
 static ToolReply say_text(const ToolArgs& a)
 {
     std::string txt = a.value("text", "");
     protocol::PromptMessage out;
-    out.role = protocol::Role::assistant;
+    out.role = protocol::Role::Assistant;
     out.content = protocol::TextContent{ .text = "🗣️ " + txt };
     return { std::move(out) };
 }
@@ -28,7 +30,7 @@ static ToolReply car_info(const ToolArgs&)
     };
 
     protocol::PromptMessage msg;
-    msg.role    = protocol::Role::assistant;
+    msg.role    = protocol::Role::Assistant;
     msg.content = std::move(res);
     return { std::move(msg) };
 }

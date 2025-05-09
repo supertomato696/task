@@ -4,10 +4,11 @@
 #include <iomanip>
 
 #include <prompt/TemplateEngine.hpp>
+#include "prompt/PromptTemplate.hpp"
 
-using namespace mcp::prompt;
+//using namespace mcp::prompt;
 namespace proto = mcp::protocol;
-
+namespace mcp::prompt {
 /* ===================================================================== */
 /*                               模板 CRUD                               */
 /* ===================================================================== */
@@ -149,6 +150,8 @@ std::string PromptStore::makeKey(const std::string& name,
     for (unsigned char c : md5) oss << std::hex << std::setw(2)
                                     << std::setfill('0') << int(c);
     return name + "|" + oss.str();
+}
+
 }
 
 

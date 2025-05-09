@@ -1,4 +1,4 @@
-include/prompt/MultiModalAssembler.hpp
+
 
 #pragma once
 #include "protocol/McpContent.hpp"          // PromptMessage / TextContent / …

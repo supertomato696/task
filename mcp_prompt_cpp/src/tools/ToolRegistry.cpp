@@ -2,13 +2,13 @@
 #include <stdexcept>
 
 using namespace mcp::tools;
+// namespace protocol = namespace mcp::protocol;
+// void ToolRegistry::registerTool(const ToolDef& def)
+// {
+//     map_.emplace(def.meta.name, def);
+// }
 
-void ToolRegistry::registerTool(const ToolDef& def)
-{
-    map_.emplace(def.meta.name, def);
-}
-
-std::vector<protocol::Tool> ToolRegistry::listTools() const
+std::vector<mcp::protocol::Tool> ToolRegistry::listTools() const
 {
     std::vector<protocol::Tool> v;
     v.reserve(map_.size());

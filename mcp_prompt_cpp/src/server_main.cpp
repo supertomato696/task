@@ -32,9 +32,9 @@ int main()
     echoAudio.meta.arguments   = { {{"name","audio"}} };
 
     echoAudio.messages = {
-        { protocol::Role::user,
+        { protocol::Role::User,
           protocol::TextContent{ "file:///tmp/a.wav" } },
-        { protocol::Role::assistant,
+        { protocol::Role::Assistant,
           protocol::TextContent{ "已收到音频，播放完毕。" } }
     };
 
