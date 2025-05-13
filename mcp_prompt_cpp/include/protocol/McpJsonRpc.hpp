@@ -28,6 +28,33 @@ struct adl_serializer<std::variant<std::string, int>> {
 };
 } // namespace nlohmann
 
+namespace nlohmann {
+    template <>
+    struct adl_serializer<std::variant<std::monostate, int64_t, std::string>> {
+        static void to_json(json& j, const std::variant<std::monostate, int64_t, std::string>& id) {
+            std::visit([&j](auto&& v) {
+                using T = std::decay_t<decltype(v)>;
+                if constexpr (std::is_same_v<T, std::monostate>) {
+                    j = nullptr;
+                } else {
+                    j = v;
+                }
+            }, id);
+        }
+
+        static void from_json(const json& j, std::variant<std::monostate, int64_t, std::string>& id) {
+            if (j.is_null()) {
+                id = std::monostate{};
+            } else if (j.is_number_integer()) {
+                id = j.get<int64_t>();
+            } else if (j.is_string()) {
+                id = j.get<std::string>();
+            } else {
+                throw json::type_error::create(302, "id must be null, integer or string", &j);
+            }
+        }
+    };
+} // namespace nlohmann
 
 using json = nlohmann::json;
 
@@ -331,34 +358,34 @@ inline RequestId parseId(const json& j) {
 /* ------------------------------------------------------------------ */
 /*  JSON‑RPC "id" 支持三种形态：null / integer / string               */
 /* ------------------------------------------------------------------ */
-using Id = std::variant<std::monostate, int64_t, std::string>;
-
-/* 序列化 / 反序列化  */
-inline void to_json(json& j, const Id& id)
-{
-    std::visit([&](auto&& v){
-        using T = std::decay_t<decltype(v)>;
-        if constexpr (std::is_same_v<T, std::monostate>)
-            j = nullptr;
-        else
-            j = v;
-    }, id);
-}
-
-inline void from_json(const json& j, Id& id)
-{
-    if(j.is_null())               id = std::monostate{};
-    else if(j.is_number_integer()) id = j.get<int64_t>();
-    else if(j.is_string())        id = j.get<std::string>();
-    else
-        throw std::runtime_error("invalid JSON‑RPC id");
-}
+// using RequestId = std::variant<std::monostate, int64_t, std::string>;
+//
+// /* 序列化 / 反序列化  */
+// inline void to_json(json& j, const RequestId& id)
+// {
+//     std::visit([&](auto&& v){
+//         using T = std::decay_t<decltype(v)>;
+//         if constexpr (std::is_same_v<T, std::monostate>)
+//             j = nullptr;
+//         else
+//             j = v;
+//     }, id);
+// }
+//
+// inline void from_json(const json& j, RequestId& id)
+// {
+//     if(j.is_null())               id = std::monostate{};
+//     else if(j.is_number_integer()) id = j.get<int64_t>();
+//     else if(j.is_string())        id = j.get<std::string>();
+//     else
+//         throw std::runtime_error("invalid JSON‑RPC id");
+// }
 
 /* ------------------------------------------------------------------ */
 /*  构造 Request / Result / Error                                      */
 /* ------------------------------------------------------------------ */
 inline json
-makeJsonRpcRequest(const Id& id,
+makeJsonRpcRequest(const RequestId& id,
                    std::string_view method,
                    json params = json::object())
 {
@@ -373,9 +400,9 @@ makeJsonRpcRequest(const Id& id,
 }
 
 inline json
-makeJsonRpcResult(const Id& id, json result)
+makeJsonRpcResult(const RequestId& id, json result)
 {
-    return {
+    return json{
         {"jsonrpc", "2.0"},
         {"id",      id},
         {"result",  std::move(result)}
@@ -383,7 +410,7 @@ makeJsonRpcResult(const Id& id, json result)
 }
 
 inline json
-makeJsonRpcError(const Id& id,
+makeJsonRpcError(const RequestId& id,
                  int        code,
                  std::string message,
                  json        data = json::object())
@@ -407,7 +434,7 @@ makeJsonRpcError(const Id& id,
 /* ------------------------------------------------------------------ */
 inline bool
 getBasicRequestFields(const json&  j,
-                      Id&          idOut,
+                      RequestId&          idOut,
                       std::string& methodOut,
                       json&        paramsOut)
 {
@@ -416,8 +443,9 @@ getBasicRequestFields(const json&  j,
 
     methodOut = j["method"].get<std::string>();
     paramsOut = j.value("params", json::object());
-    idOut     = j.value("id",     Id{std::monostate{}}).get<Id>();
-
+    // idOut     = j.value("id",     RequestId{std::monostate{}}).get<RequestId>();
+    idOut = j.value("id", idToJson(RequestId{})) // 使用辅助函数转换
+                .get<RequestId>();
     return true;
 }
 

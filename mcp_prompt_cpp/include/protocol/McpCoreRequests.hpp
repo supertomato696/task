@@ -1,5 +1,6 @@
 #pragma once
 
+#include <McpCapabilities.hpp>
 #include <string>
 #include <vector>
 #include <optional>

@@ -6,7 +6,7 @@ using json = nlohmann::json;
 
 
 
-static json makeError(const mcp::protocol::Id& id, int code, std::string_view msg)
+static json makeError(const mcp::protocol::RequestId& id, int code, std::string_view msg)
 {
     return mcp::protocol::makeJsonRpcError(id, code, std::string(msg));
 }

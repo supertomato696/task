@@ -127,7 +127,7 @@ public:
 
 private:
     using json = nlohmann::json;
-    using Id   = protocol::Id;
+    using Id   = protocol::RequestId;
 
     struct Pending {
         std::promise<json> prom;
@@ -156,7 +156,12 @@ JsonRpcClient::callAsync(const std::string& method, const ParamsT& params)
     Id id;
     {
         std::scoped_lock lk(mtx_);
-        id = nextId_++;
+        // id = nextId_++;
+        if (std::holds_alternative<long>(nextId_)) {
+            id = std::get<long>(nextId_)++;
+            nextId_ = id;
+
+        }
         auto pending = std::make_shared<Pending>();
         inflight_[id] = pending;
 

@@ -1,4 +1,5 @@
 #include "resource/ResourceService.hpp"
+#include <protocol/McpMisc.hpp>
 
 using namespace mcp;
 using namespace mcp::resource;
@@ -21,6 +22,7 @@ json ResourceService::handle(const json& rpc)
     std::string   method;
     json          params;
 
+    // if(!protocol::getBasicRequestFields(rpc, id, method, params))
     if(!protocol::parseRequest(rpc, id, method, params))
         return protocol::makeJsonRpcError(id, -32600, "invalid request");
 

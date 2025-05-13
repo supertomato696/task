@@ -16,7 +16,7 @@ ToolService::ToolService(ToolRegistry& reg,
 /* ---------------------------------------------------------------------- */
 json ToolService::handle(const json& rpc)
 {
-    protocol::Id     id;
+    protocol::RequestId     id;
     std::string      method;
     json             params;
 
@@ -40,7 +40,7 @@ json ToolService::handle(const json& rpc)
 }
 
 /* ====== tools/list ===================================================== */
-json ToolService::onList(const protocol::Id& id,
+json ToolService::onList(const protocol::RequestId& id,
                          const protocol::PaginatedParams& /*unused*/)
 {
     protocol::ListToolsResult res;
@@ -50,7 +50,7 @@ json ToolService::onList(const protocol::Id& id,
 }
 
 /* ====== tools/call ===================================================== */
-json ToolService::onCall(const protocol::Id& id,
+json ToolService::onCall(const protocol::RequestId& id,
                          const protocol::CallToolParams& p)
 {
     protocol::CallToolResult out;

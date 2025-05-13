@@ -39,19 +39,19 @@ struct adl_serializer<std::optional<T>> {
 
 
 
-namespace nlohmann {
-    // 添加对 RequestId 的序列化支持
-    template <>
-    struct adl_serializer<mcp::protocol::RequestId> {
-        static void to_json(json& j, const mcp::protocol::RequestId& id) {
-            mcp::protocol::idToJson(id).swap(j); // 复用已有的 idToJson 逻辑
-        }
-
-        static void from_json(const json& j, mcp::protocol::RequestId& id) {
-            id = mcp::protocol::parseId(j); // 复用已有的 parseId 逻辑
-        }
-    };
-} // namespace nlohmann
+// namespace nlohmann {
+//     // 添加对 RequestId 的序列化支持
+//     template <>
+//     struct adl_serializer<mcp::protocol::RequestId> {
+//         static void to_json(json& j, const mcp::protocol::RequestId& id) {
+//             mcp::protocol::idToJson(id).swap(j); // 复用已有的 idToJson 逻辑
+//         }
+//
+//         static void from_json(const json& j, mcp::protocol::RequestId& id) {
+//             id = mcp::protocol::parseId(j); // 复用已有的 parseId 逻辑
+//         }
+//     };
+// } // namespace nlohmann
 
 using json = nlohmann::json;
 

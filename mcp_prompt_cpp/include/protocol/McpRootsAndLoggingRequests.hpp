@@ -200,18 +200,20 @@ inline void from_json(const json& j, ProgressNotification& n) {
 
 // ===== 取消通知 =====
 struct CancelledNotification {
-     const std::string method = "notifications/cancelled";
+     // const std::string method = "notifications/cancelled";
+     std::string method = "notifications/cancelled";
     struct Params {
-        std::variant<std::string, int> requestId;
+        // std::variant<std::string, int> requestId;
+        RequestId requestId;
         std::optional<std::string> reason;
     } params;
 };
 
 inline void to_json(json& j, const CancelledNotification::Params& p) {
-//    j = json{{"requestId", p.requestId}};
-    std::visit([&j](const auto& val) {
-        j["requestId"] = val;
-    }, p.requestId);
+    j = json{{"requestId", p.requestId}};
+    // std::visit([&j](const auto& val) {
+    //     j["requestId"] = val;
+    // }, p.requestId);
     if (p.reason) j["reason"] = *p.reason;
 }
 inline void from_json(const json& j, CancelledNotification::Params& p) {
@@ -238,6 +240,7 @@ inline void to_json(json& j, const InitializedNotification& n) {
         j["params"] = json::object();
     }
 }
+
 inline void from_json(const json& j, InitializedNotification& n) {
     if (j.contains("params") && j["params"].contains("_meta")) {
         j["params"].at("_meta").get_to(n._meta);

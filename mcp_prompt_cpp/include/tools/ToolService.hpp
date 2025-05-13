@@ -31,10 +31,10 @@ public:
 
 private:
     /* 内部分发 —— 对应 MCP 方法 */
-    nlohmann::json onList(const mcp::protocol::Id& id,
+    nlohmann::json onList(const mcp::protocol::RequestId& id,
                           const protocol::PaginatedParams& p);
 
-    nlohmann::json onCall(const protocol::Id& id,
+    nlohmann::json onCall(const protocol::RequestId& id,
                           const protocol::CallToolParams& p);
 
     /* 当 Registry 变化时自动触发 */
