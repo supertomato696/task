@@ -141,41 +141,85 @@
 
 
 
+// #include "mcp/client2/JsonRpcClient.hpp"
+// #include <stdexcept>
+
+// using namespace mcp::client2;
+// using json = nlohmann::json;
+
+// JsonRpcClient::JsonRpcClient(transport::ITransport& t):tx_(t){}
+
+// /* 收到来自 Transport 的 json 消息 */
+// void JsonRpcClient::deliver(const json& msg)
+// {
+//     /* 只处理 Response/Error，Notification 由高层模块自行订阅 */
+//     Id id; json result;
+//     if(protocol::parseResponse(msg, id, result)){   // 成功 Response
+//         std::shared_ptr<Pending> pend;
+//         {
+//             std::scoped_lock lk(mtx_);
+//             auto it = inflight_.find(id);
+//             if(it==inflight_.end()) return;         // 不是我们发的
+//             pend = it->second;
+//             inflight_.erase(it);
+//         }
+//         pend->prom.set_value(std::move(result));
+//     }
+//     else if(protocol::parseError(msg, id, result)){ // Error
+//         std::string err = result["message"];
+//         std::runtime_error ex(err);
+//         std::shared_ptr<Pending> pend;
+//         {
+//             std::scoped_lock lk(mtx_);
+//             auto it = inflight_.find(id);
+//             if(it==inflight_.end()) return;
+//             pend = it->second;
+//             inflight_.erase(it);
+//         }
+//         pend->prom.set_exception(std::make_exception_ptr(ex));
+//     }
+// }
+
+
 #include "mcp/client2/JsonRpcClient.hpp"
-#include <stdexcept>
+#include <iostream>
 
 using namespace mcp::client2;
-using json = nlohmann::json;
+using protocol::Id;
+using protocol::json;
 
-JsonRpcClient::JsonRpcClient(transport::ITransport& t):tx_(t){}
-
-/* 收到来自 Transport 的 json 消息 */
+/* ----------- 收包 ------------ */
 void JsonRpcClient::deliver(const json& msg)
 {
-    /* 只处理 Response/Error，Notification 由高层模块自行订阅 */
-    Id id; json result;
-    if(protocol::parseResponse(msg, id, result)){   // 成功 Response
-        std::shared_ptr<Pending> pend;
-        {
-            std::scoped_lock lk(mtx_);
-            auto it = inflight_.find(id);
-            if(it==inflight_.end()) return;         // 不是我们发的
-            pend = it->second;
-            inflight_.erase(it);
-        }
-        pend->prom.set_value(std::move(result));
+    /* (1) Notification: 没有 id */
+    if(!msg.contains("id") && msg.contains("method")){
+        std::string m  = msg["method"];
+        json        p  = msg.value("params", json::object());
+        std::shared_lock sl(notifyMtx_);
+        if(auto it = notifyMap_.find(m); it != notifyMap_.end())
+            it->second(p);
+        return;
     }
-    else if(protocol::parseError(msg, id, result)){ // Error
-        std::string err = result["message"];
-        std::runtime_error ex(err);
-        std::shared_ptr<Pending> pend;
-        {
-            std::scoped_lock lk(mtx_);
-            auto it = inflight_.find(id);
-            if(it==inflight_.end()) return;
-            pend = it->second;
-            inflight_.erase(it);
-        }
-        pend->prom.set_exception(std::make_exception_ptr(ex));
+
+    /* (2) Response / Error */
+    Id   id;    json payload;
+    bool okResp = protocol::parseResponse(msg, id, payload);
+    bool okErr  = protocol::parseError   (msg, id, payload);
+    if(!okResp && !okErr) return;                // 非法包
+
+    std::shared_ptr<Pending> pend;
+    {
+        std::scoped_lock g(mtx_);
+        auto it = inflight_.find(id);
+        if(it == inflight_.end()) return;        // 不是我们的
+        pend = it->second;
+        inflight_.erase(it);
+    }
+    if(okResp){
+        pend->prom.set_value(std::move(payload));
+    }else{ // error
+        std::string msg = payload.value("message","unknown");
+        pend->prom.set_exception(
+            std::make_exception_ptr(std::runtime_error(msg)));
     }
 }

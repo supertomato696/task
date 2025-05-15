@@ -429,6 +429,21 @@ makeJsonRpcError(const RequestId& id,
     };
 }
 
+inline bool parseResponse(const json& j, Id& outId, json& outResult)
+{
+    if(!j.is_object() || !j.contains("result")) return false;
+    outId     = j.value("id", Id{});
+    outResult = j["result"];
+    return true;
+}
+inline bool parseError(const json& j, Id& outId, json& outError)
+{
+    if(!j.is_object() || !j.contains("error")) return false;
+    outId     = j.value("id", Id{});
+    outError  = j["error"];
+    return true;
+}
+
 /* ------------------------------------------------------------------ */
 /*  快捷解析：提取 id / method / params；若格式非法返回 false          */
 /* ------------------------------------------------------------------ */

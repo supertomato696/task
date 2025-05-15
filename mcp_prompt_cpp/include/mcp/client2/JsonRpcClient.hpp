@@ -95,87 +95,182 @@
 
 
 
-#pragma once
-#include "protocol/McpJsonRpc.hpp"
-#include "transport/ITransport.hpp"
+// #pragma once
+// #include "protocol/McpJsonRpc.hpp"
+// #include "transport/ITransport.hpp"
 
+// #include <future>
+// #include <unordered_map>
+// #include <mutex>
+
+// namespace mcp::client2 {
+
+// /**
+//  * 线程安全：内部用 mutex 保护 inflight map
+//  * 所有发送均转成 JSON，由 ITransport 实际写入；接收由外层 Transport
+//  * 监听后回调 deliver()。
+//  */
+// class JsonRpcClient {
+// public:
+//     explicit JsonRpcClient(transport::ITransport& tx);
+
+//     /** 同步调用 —— 阻塞直到结果 / error 抛异常 */
+//     template <typename ParamsT, typename ResultT>
+//     ResultT call(const std::string& method, const ParamsT& params);
+
+//     /** 异步调用 —— 返回 std::future<ResultT> */
+//     template <typename ParamsT, typename ResultT>
+//     std::future<ResultT> callAsync(const std::string& method, const ParamsT& params);
+
+//     /** 由 Transport 收到消息后调用 */
+//     void deliver(const nlohmann::json& msg);
+
+// private:
+//     using json = nlohmann::json;
+//     using Id   = protocol::RequestId;
+
+//     struct Pending {
+//         std::promise<json> prom;
+//     };
+
+//     Id nextId_ = 1;
+//     transport::ITransport& tx_;
+
+//     std::mutex                          mtx_;
+//     std::unordered_map<Id, std::shared_ptr<Pending>> inflight_;
+// };
+
+// /* ----- template impl -------------------------------------------------- */
+// template<typename ParamsT, typename ResultT>
+// ResultT JsonRpcClient::call(const std::string& m, const ParamsT& p)
+// {
+//     auto fut = callAsync<ParamsT, ResultT>(m, p);
+//     return fut.get();
+// }
+
+// template<typename ParamsT, typename ResultT>
+// std::future<ResultT>
+// JsonRpcClient::callAsync(const std::string& method, const ParamsT& params)
+// {
+//     /* 1. 生成 id + inflight entry */
+//     Id id;
+//     {
+//         std::scoped_lock lk(mtx_);
+//         // id = nextId_++;
+//         if (std::holds_alternative<long>(nextId_)) {
+//             id = std::get<long>(nextId_)++;
+//             nextId_ = id;
+
+//         }
+//         auto pending = std::make_shared<Pending>();
+//         inflight_[id] = pending;
+
+//         /* 2. 发送请求 */
+//         auto req = mcp::protocol::makeJsonRpcRequest(id, method, params);
+//         tx_.send(req);
+//     }
+
+//     /* 3. 把 json -> ResultT 转换包裹在未来值上 */
+//     auto rawFuture = inflight_[id]->prom.get_future();
+//     return std::async(std::launch::deferred, [rawFuture = std::move(rawFuture)]() mutable {
+//         auto j = rawFuture.get();
+//         return j.get<ResultT>();
+//     });
+// }
+
+// } // namespace
+
+
+#pragma once
+#include <asio.hpp>
+#include <nlohmann/json.hpp>
 #include <future>
 #include <unordered_map>
 #include <mutex>
 
+#include "protocol/McpJsonRpc.hpp"
+#include "transport/ITransport.hpp"
+
 namespace mcp::client2 {
 
-/**
- * 线程安全：内部用 mutex 保护 inflight map
- * 所有发送均转成 JSON，由 ITransport 实际写入；接收由外层 Transport
- * 监听后回调 deliver()。
- */
+/* 封装在已有 Transport（TCP / WS）之上 */
 class JsonRpcClient {
 public:
-    explicit JsonRpcClient(transport::ITransport& tx);
-
-    /** 同步调用 —— 阻塞直到结果 / error 抛异常 */
-    template <typename ParamsT, typename ResultT>
-    ResultT call(const std::string& method, const ParamsT& params);
-
-    /** 异步调用 —— 返回 std::future<ResultT> */
-    template <typename ParamsT, typename ResultT>
-    std::future<ResultT> callAsync(const std::string& method, const ParamsT& params);
-
-    /** 由 Transport 收到消息后调用 */
-    void deliver(const nlohmann::json& msg);
-
-private:
-    using json = nlohmann::json;
-    using Id   = protocol::RequestId;
-
-    struct Pending {
-        std::promise<json> prom;
-    };
-
-    Id nextId_ = 1;
-    transport::ITransport& tx_;
-
-    std::mutex                          mtx_;
-    std::unordered_map<Id, std::shared_ptr<Pending>> inflight_;
-};
-
-/* ----- template impl -------------------------------------------------- */
-template<typename ParamsT, typename ResultT>
-ResultT JsonRpcClient::call(const std::string& m, const ParamsT& p)
-{
-    auto fut = callAsync<ParamsT, ResultT>(m, p);
-    return fut.get();
-}
-
-template<typename ParamsT, typename ResultT>
-std::future<ResultT>
-JsonRpcClient::callAsync(const std::string& method, const ParamsT& params)
-{
-    /* 1. 生成 id + inflight entry */
-    Id id;
-    {
-        std::scoped_lock lk(mtx_);
-        // id = nextId_++;
-        if (std::holds_alternative<long>(nextId_)) {
-            id = std::get<long>(nextId_)++;
-            nextId_ = id;
-
-        }
-        auto pending = std::make_shared<Pending>();
-        inflight_[id] = pending;
-
-        /* 2. 发送请求 */
-        auto req = mcp::protocol::makeJsonRpcRequest(id, method, params);
-        tx_.send(req);
+    explicit JsonRpcClient(transport::ITransport& tx) : tx_(tx) {
+        tx_.onMessage([this](const nlohmann::json& j){ deliver(j); });
     }
 
-    /* 3. 把 json -> ResultT 转换包裹在未来值上 */
-    auto rawFuture = inflight_[id]->prom.get_future();
-    return std::async(std::launch::deferred, [rawFuture = std::move(rawFuture)]() mutable {
-        auto j = rawFuture.get();
-        return j.get<ResultT>();
-    });
-}
+    /* 同步调用（会阻塞当前线程） */
+    template<typename ParamsT, typename ResultT>
+    ResultT call(const std::string& method, const ParamsT& params)
+    {
+        protocol::Id id = nextId();
+        auto req = protocol::makeJsonRpcRequest(id, method, nlohmann::json(params));
 
-} // namespace
+        std::promise<nlohmann::json> prom;
+        {
+            std::scoped_lock lock(mtx_);
+            inflight_[id] = std::make_shared<Pending>(prom);
+        }
+        tx_.send(req);                 // 立即发
+        nlohmann::json result = prom.get_future().get();   // 阻塞
+        return result.get<ResultT>();
+    }
+
+    /* 异步调用，返回 future<ResultT> */
+    template<typename ParamsT, typename ResultT>
+    std::future<ResultT> callAsync(const std::string& method, const ParamsT& params)
+    {
+        protocol::Id id = nextId();
+        auto req = protocol::makeJsonRpcRequest(id, method, nlohmann::json(params));
+
+        auto pend = std::make_shared<Pending>();
+        std::future<ResultT> fut =
+            pend->prom.get_future().then(
+                [](std::future<nlohmann::json> f){
+                    return f.get().template get<ResultT>();
+                });
+
+        {
+            std::scoped_lock lock(mtx_);
+            inflight_[id] = pend;
+        }
+        tx_.send(req);
+        return fut;
+    }
+
+    /* 订阅服务器通知（method → cb(json params)) */
+    void onNotification(const std::string& method,
+                        std::function<void(const nlohmann::json&)> cb)
+    {
+        std::scoped_lock lk(notifyMtx_);
+        notifyMap_[method] = std::move(cb);
+    }
+
+private:
+    /* ------------ 收到任何 JSON-RPC 消息 ------------ */
+    void deliver(const nlohmann::json& msg);
+
+    struct Pending {
+        std::promise<nlohmann::json> prom;
+        Pending() = default;
+        explicit Pending(std::promise<nlohmann::json>& p):prom(std::move(p)){}
+    };
+
+    protocol::Id nextId() {
+        return static_cast<std::int64_t>(idGen_++);
+    }
+
+    /* state */
+    transport::ITransport&                    tx_;
+    std::atomic_uint64_t                      idGen_{1};
+    std::unordered_map<protocol::Id,
+                       std::shared_ptr<Pending>> inflight_;
+    std::mutex                                mtx_;
+
+    std::unordered_map<std::string,
+                       std::function<void(const nlohmann::json&)>> notifyMap_;
+    std::shared_mutex                         notifyMtx_;
+};
+
+} // namespace mcp::client2
