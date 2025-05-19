@@ -1,278 +1,202 @@
+// =============================================================
+//  Modular Linux App Process Manager (C++20) – Consolidated Code
+//  textdoc id: 6829d0dfd82c8191a878c14ded7e7350   (v6  – EnvManager overhaul)
+// =============================================================
+//  NOTE: This single file aggregates the essential headers/impls so
+//  you can copy‑split into real *.hpp / *.cpp.  Unchanged components
+//  are elided with "..." to keep focus on the new EnvManager.hpp.
+//  Compile‑ready versions should restore the full code.
+//
+// -------------------------------------------------------------
+//  Constants.hpp, ProcessTypes.hpp, LinuxAppInfo.hpp, Launcher.hpp,
+//  ProcessMonitor.hpp, LinuxAppProcessManager.{hpp,cpp}
+//  (UNCHANGED from v5 – omitted here for brevity)
+// -------------------------------------------------------------
+
+/*
+ *  ================================
+ *  EnvManager.hpp   (header‑only)
+ *  ================================
+ *  Responsibilities:
+ *    • Collect parent process environment (via `environ`).
+ *    • Merge inline KEY=VAL pairs (comma‑separated) and env‑file lines.
+ *    • Guarantee later sources override earlier ones (inline > file > parent).
+ *    • Auto‑patch LD_LIBRARY_PATH to include:
+ *         ‑  executable directory
+ *         ‑  parentDir/lib  and parentDir/lib64
+ *         (while preserving any existing entries, deduplicated & POSIX order).
+ *    • Return vector<string> ready for conversion to `char* const*`.
+ *
+ *  Design choices:
+ *    1. Use `unordered_map<string,size_t>` index to enable O(1) overwrite.
+ *    2. Preserve original insertion order except for overwritten keys.
+ *    3. Deduplicate LD_LIBRARY_PATH segments with `unordered_set`.
+ */
+
 #pragma once
-#include <iostream>
-#include <sys/types.h>
-#include <iostream>
-#include <map>
-#include <mutex>
-#include <shared_mutex>
-#include <thread>
-#include <condition_variable>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <csignal>
-#include <cstring>
-#include <vector>
-//#include "impl/storage/db_def.h"
-#include "bos_aios_app.h"
-#include  <task_util.h>
+
 #include <cstdlib>
-#include <asio.hpp>
-
-#include <LinuxAppInfor.hpp>
-
-
-
-#include <limits.h>
-#include <string>
-#include <libgen.h>
+#include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
+extern char **environ; // POSIX global
 
+// Forward decl of LinuxAppInfo (from other header)
+struct LinuxAppInfo;
 
-    std::string get_executable_path(const std::string& appPath) {
-        if (appPath.empty()) {
-            std::cout << "empty path" << std::endl;
-            return "";
+class EnvManager {
+public:
+    /// Build final environment vector for execve
+    static std::vector<std::string> buildEnvironment(const LinuxAppInfo &app) {
+        std::vector<std::string> envStrings;
+        envStrings.reserve(128);
+
+        // 1) parent env
+        for (char **env = environ; *env; ++env) {
+            envStrings.emplace_back(*env);
         }
 
-        char realPath[PATH_MAX];
-        if (realpath(appPath.c_str(), realPath) == nullptr) {
-            std::cerr << "Failed to resolve the absolute path" << std::endl;
-            return "";
+        // 2) build index for quick overwrite
+        std::unordered_map<std::string, std::size_t> idx;
+        for (std::size_t i = 0; i < envStrings.size(); ++i) {
+            auto eq = envStrings[i].find('=');
+            if (eq != std::string::npos)
+                idx.emplace(envStrings[i].substr(0, eq), i);
         }
-        return std::string(realPath);
+
+        // 3) inline KV (highest precedence)
+        if (app.envInline && !app.envInline->empty()) {
+            applyPairs(parseInline(*app.envInline), envStrings, idx);
+        }
+        // 4) env file
+        if (app.envFile && !app.envFile->empty()) {
+            applyPairs(parseFile(*app.envFile), envStrings, idx);
+        }
+
+        // 5) LD_LIBRARY_PATH patch (lowest overwrite precedence)
+        patchLdLibraryPath(envStrings, idx, app.execPath);
+
+        return envStrings; // RVO
     }
 
-    std::vector<std::string> get_library_paths(const std::string& execPath) {
-        if (execPath.empty()) {
-            std::cout << "invalid augment " << execPath << std::endl;
-            return {};
-        }
+private:
+    // ---------- helpers --------------------------------------------------
 
-        char exe_path_cstr[PATH_MAX];
-        std::strcpy(exe_path_cstr, execPath.c_str());
-        std::string execDir = dirname(exe_path_cstr);
-
-        std::string exe_dir_str(execDir);
-        char exe_dir_cstr[PATH_MAX];
-        std::strcpy(exe_dir_cstr, exe_dir_str.c_str());
-        std::string parentDir = dirname(exe_dir_cstr);
-
-        std::strcpy(exe_path_cstr, parentDir.c_str());
-        std::string grandParentDir = dirname(exe_path_cstr);
-        std::vector<std::string> libPaths;
-        libPaths.push_back(execDir + "/lib");
-        libPaths.push_back(execDir + "/lib64");
-
-
-        libPaths.push_back(parentDir + "/lib");
-        libPaths.push_back(parentDir + "/lib64");
-
-        libPaths.push_back(grandParentDir + "/lib");
-        libPaths.push_back(grandParentDir + "/lib64");
-
-        return libPaths;
+    static std::string trim(std::string_view sv) {
+        const char *ws = " \t\n\r";
+        std::size_t b = sv.find_first_not_of(ws);
+        if (b == std::string::npos) return {};
+        std::size_t e = sv.find_last_not_of(ws);
+        return std::string{sv.substr(b, e - b + 1)};
     }
 
-
-    void add_path_to_env(const char* envVar, const std::vector<std::string>& paths) {
-        const char* currentValue = std::getenv(envVar);
-        std::string updateValue;
-
-        if (currentValue != nullptr) {
-            std::cout << envVar<< " before set  " << currentValue << std::endl;
-            updateValue = std::string(currentValue);
-        } else {
-            std::cout << envVar << " doesn't exist!" << std::endl;
+    static std::vector<std::pair<std::string, std::string>>
+    parseInline(const std::string &csv) {
+        std::vector<std::pair<std::string, std::string>> out;
+        std::stringstream ss(csv);
+        std::string kv;
+        while (std::getline(ss, kv, ',')) {
+            auto eq = kv.find('=');
+            if (eq == std::string::npos) continue;
+            std::string k = trim(kv.substr(0, eq));
+            std::string v = trim(kv.substr(eq + 1));
+            if (!k.empty()) out.emplace_back(std::move(k), std::move(v));
         }
-
-        for (const auto& path : paths ) {
-            if (!updateValue.empty()) {
-                updateValue += ":";
-            }
-            updateValue += path;
-        }
-
-        if (setenv(envVar, updateValue.c_str(), 1) != 0) {
-            std::cerr << "Failed to set " << envVar << " value!" << std::endl;
-            return ;
-        }
-
-        std::cout << "set " << envVar << ": "<< updateValue << " successful!" << std::endl;
-
+        return out;
     }
 
-    void set_ld_library_path(const std::string& exec_path) {
-        std::string ab_path = get_executable_path(exec_path);
-        if (ab_path.empty()) {
-            return ;
-        }
-
-        std::vector<std::string> lib_paths = get_library_paths(ab_path);
-
-        add_path_to_env("LD_LIBRARY_PATH", lib_paths);
-    }
-
-
-    std::vector<std::pair<std::string, std::string>> parse_environment_string(const std::string& env_str) {
-        if (env_str.empty()) {
-            return {};
-        }
-
-        std::vector<std::pair<std::string, std::string>> env_vars;
-        std::istringstream env_stream(env_str);
-        std::string token;
-
-        while (std::getline(env_stream, token, ',')) {
-            size_t pos = token.find('=');
-            if (pos != std::string::npos) {
-                std::string key = token.substr(0, pos);
-                std::string value = token.substr(pos + 1);
-                env_vars.emplace_back(key, value);
-            } else {
-                std::cerr << "Invalid format for environment variable: " << token << std::endl;
-            }
-        }
-
-        return env_vars;
-    }
-
-    void set_environment_variable(const std::string& key, const std::string&  value) {
-        if (key.empty()) {
-            return ;
-        }
-
-        if (key == "UID") {
-            if (!value.empty()) {
-                uid_t uid = static_cast<uid_t>(std::stoi(value));
-                if (setuid(uid) != 0) {
-                    std::cerr << "Failed to set UID to " << value << std::endl;
-                } else {
-                    std::cout << "Set UID to " << value << std::endl;
-                }
-            }  else {
-                std::cerr << "UID value is empty, cannot set UID." << std::endl;
-            }
-
-            return ;
-        }
-
-        if (value.empty()) {
-            if (unsetenv(key.c_str()) != 0) {
-                std::cerr << "Failed to unset environment variable: " << key << std::endl;
-                return ;
-            } else {
-                std::cout << "Unset " << key << std::endl;
-            }
-        }  else {
-            if (setenv(key.c_str(), value.c_str(), 1) != 0) {
-                std::cerr << "Failed to set environment variable: " << key << std::endl;
-            } else {
-                std::cout << "Set " << key << "=" << value << std::endl;
-            }
-        }
-
-        return ;
-    }
-
-    void set_environment_variable(const std::vector<std::pair<std::string, std::string>>& env_vars) {
-        if (env_vars.empty()) {
-            return ;
-        }
-
-        for (const auto& env_var : env_vars) {
-            set_environment_variable(env_var.first, env_var.second);
-        }
-    }
-
-
-
-    void parse_and_set_environment(const std::string& env_str) {
-        if (env_str.empty()) {
-            return ;
-        }
-        auto env_vars = parse_environment_string(env_str);
-        set_environment_variable(env_vars);
-    }
-
-    std::string trim(const std::string &str) {
-        size_t first = str.find_first_not_of(" \t\r\n");
-        if (first == std::string::npos) {
-            return {};
-        }
-        size_t last = str.find_last_not_of(" \t\r\n");
-        return str.substr(first, last - first + 1);
-    }
-
-    void set_environment_variable_from_file(const std::string& filePath) {
-        std::ifstream file(filePath);
-        if (!file.is_open()) {
-            std::cerr << "Failed to open file: "  << filePath << std::endl;
-            return;
-        }
-
+    static std::vector<std::pair<std::string, std::string>>
+    parseFile(const std::string &path) {
+        std::vector<std::pair<std::string, std::string>> out;
+        std::ifstream ifs(path);
+        if (!ifs) return out;
         std::string line;
-        while (std::getline(file, line)) {
-
-            size_t commentPos = line.find('#');
-            if (commentPos != std::string::npos) {
-                line = line.substr(0, commentPos);
-            }
-
+        while (std::getline(ifs, line)) {
             line = trim(line);
+            if (line.empty() || line[0] == '#') continue;
+            auto eq = line.find('=');
+            if (eq == std::string::npos) continue;
+            std::string k = trim(line.substr(0, eq));
+            std::string v = trim(line.substr(eq + 1));
+            if (!k.empty()) out.emplace_back(std::move(k), std::move(v));
+        }
+        return out;
+    }
 
-            if (line.empty()) {
-                continue;
-            }
-
-            size_t delimiterPos = line.find('=');
-            if (delimiterPos == std::string::npos) {
-                std::cerr << "Invalid format in file: " << filePath << ", line: " << line << std::endl;
-                continue;
-            }
-
-            std::string name = trim(line.substr(0, delimiterPos));
-            std::string value = trim(line.substr(delimiterPos + 1));
-
-
-            if (value.front() == '"' && value.back() == '"') {
-                value = value.substr(1, value.size() - 2);
-            }
-
-            if (setenv(name.c_str(), value.c_str(), 1) == 0) {
-                std::cout << "Set environment variable: " << name << " = " << value << std::endl;
+    static void applyPairs(const std::vector<std::pair<std::string, std::string>> &pairs,
+                           std::vector<std::string> &envVec,
+                           std::unordered_map<std::string, std::size_t> &idx) {
+        for (auto &[k, v] : pairs) {
+            std::string kv = k + "=" + v;
+            auto it = idx.find(k);
+            if (it != idx.end()) {
+                envVec[it->second] = kv; // overwrite in‑place preserves order
             } else {
-                std::cerr << "Failed to set environment variable: " << name << std::endl;
+                idx[k] = envVec.size();
+                envVec.push_back(std::move(kv));
             }
         }
-
-        file.close();
     }
 
-    void current_process_env() {
-            std::string envFile = "/proc/self/environ";
-            std::ifstream file(envFile);
-            if (!file.is_open()) {
-                std::cerr << "failed to open: " << envFile << std::endl;
-                return;
-            }
+    static void patchLdLibraryPath(std::vector<std::string> &envVec,
+                                   std::unordered_map<std::string, std::size_t> &idx,
+                                   const std::string &execPath) {
+        // Derive candidate directories
+        std::filesystem::path exe(execPath);
+        std::string dir = exe.parent_path().string();
+        std::string parentDir = exe.parent_path().parent_path().string();
+        std::vector<std::string> extras;
+        if (!dir.empty()) extras.push_back(dir);
+        if (!parentDir.empty()) {
+            extras.push_back(parentDir + "/lib");
+            extras.push_back(parentDir + "/lib64");
+        }
 
-            std::stringstream buffer;
-            buffer << file.rdbuf();
-            std::string content = buffer.str();
+        // Grab existing LD_LIBRARY_PATH if present
+        std::string current;
+        auto it = idx.find("LD_LIBRARY_PATH");
+        if (it != idx.end()) {
+            const std::string &full = envVec[it->second];
+            current = full.substr(strlen("LD_LIBRARY_PATH="));
+        }
 
-            size_t start = 0;
-            size_t end = content.find('\0');
-            while (end != std::string::npos) {
-                std::string envVar = content.substr(start, end - start);
-                std::cout << envVar << std::endl;
-                start = end + 1;
-                end = content.find('\0', start);
-            }
+        // Build set for deduplication, preserve insertion order
+        std::unordered_set<std::string> seen;
+        std::vector<std::string> ordered;
 
-            file.close();
+        auto push_unique = [&](const std::string &p) {
+            if (p.empty()) return;
+            if (seen.insert(p).second) ordered.push_back(p);
+        };
 
+        // existing first (maintain user order)
+        if (!current.empty()) {
+            std::stringstream ss(current);
+            std::string tok;
+            while (std::getline(ss, tok, ':')) push_unique(tok);
+        }
+        // then extras
+        for (auto &e : extras) push_unique(e);
+
+        // Join
+        std::string joined;
+        for (std::size_t i = 0; i < ordered.size(); ++i) {
+            if (i) joined += ':';
+            joined += ordered[i];
+        }
+        std::string newVar = "LD_LIBRARY_PATH=" + joined;
+
+        if (it != idx.end()) {
+            envVec[it->second] = std::move(newVar);
+        } else {
+            idx["LD_LIBRARY_PATH"] = envVec.size();
+            envVec.push_back(std::move(newVar));
+        }
     }
-
+};

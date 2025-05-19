@@ -1,52 +1,58 @@
 #pragma once
+#include <asio/io_context.hpp>
+#include <asio/steady_timer.hpp>
 
-#include <asio.hpp>
+#include <chrono>
+#include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <unordered_map>
+#include <vector>
 
+#include "Launcher.hpp"
+#include "ProcessMonitor.hpp"
 #include "ProcessTypes.hpp"
 #include "LinuxAppInfo.hpp"
-#include "ProcessMonitor.hpp"
-namespace lapm {
 
 class LinuxAppProcessManager {
 public:
     using ExitCallback = std::function<void(const ProcessInfo&)>;
 
     explicit LinuxAppProcessManager(asio::io_context& ctx);
-    ~LinuxAppProcessManager();
 
-    // ---------- lifecycle ----------
-    [[nodiscard]] ProcessInfo start(const LinuxAppInfo& app);
-    void stop(std::string_view instanceId);
-    void stop(const LinuxAppInfo& app) { stop(app.instanceId); }
-    ProcessInfo restart(const LinuxAppInfo& app);
+    // ------------ lifecycle ------------
+    [[nodiscard]] ProcessInfo start  (const LinuxAppInfo& app);
+    void                       stop  (std::string_view instanceId);
+    void                       stop  (const LinuxAppInfo& app)          { stop(app.instanceId); }
+    [[nodiscard]] ProcessInfo  restart(const LinuxAppInfo& app);
 
-    // ---------- query --------------
-    [[nodiscard]] ProcessInfo query(std::string_view instanceId) const;
-    [[nodiscard]] ProcessInfo query(const LinuxAppInfo& app) const { return query(app.instanceId); }
-    [[nodiscard]] std::vector<ProcessInfo> list() const;
+    // ------------ query ----------------
+    [[nodiscard]] ProcessInfo               query (std::string_view instanceId) const;
+    [[nodiscard]] ProcessInfo               query (const LinuxAppInfo& app) const { return query(app.instanceId); }
+    [[nodiscard]] std::vector<ProcessInfo>  list() const;
 
-    // ---------- callbacks ----------
+    // ------------ callback -------------
     void registerExitCallback(ExitCallback cb);
 
 private:
-    struct ProcEntry {
-        ProcessInfo info;
-        std::shared_ptr<asio::steady_timer> killTimer; // for graceful stop
+    // 子进程退出集中处理
+    void onChildExit(pid_t pid, int rawStatus);
+
+    // 发起二阶段停止：SIGTERM → timer → SIGKILL
+    void asyncGracefulKill(pid_t pid, const std::string& id);
+
+    // -----------------------------------
+    struct TimedEntry {
+        ProcessInfo                          info;
+        std::shared_ptr<asio::steady_timer>  termTimer;   // nullptr == 未在停止流程
     };
 
-    // ------------ impl internals ------------
-    void onChildExit(pid_t pid, int status);
+    asio::io_context&                                   io_;
+    ProcessMonitor                                      monitor_;
+    mutable std::shared_mutex                           mu_;          // 保护下表
+    std::unordered_map<std::string, TimedEntry>         table_;       // id  -> entry
+    std::unordered_map<pid_t,  std::string>             pid2id_;      // pid -> id
+    std::vector<ExitCallback>                           callbacks_;
 
-    asio::io_context& ctx_;
-    ProcessMonitor monitor_;
-
-    mutable std::shared_mutex mtx_;
-    std::unordered_map<std::string, ProcEntry> byId_;
-    std::unordered_map<pid_t, std::string> idByPid_;
-    std::vector<ExitCallback> callbacks_;
+    static constexpr std::chrono::milliseconds kGracefulStopTimeout{3000};
 };
-
-} // namespace lapm
