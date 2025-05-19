@@ -38,17 +38,6 @@
 
             parse_and_set_environment(linuxAppInfo.categories);
 
-//            if (!linuxAppInfo.actions.empty()) {
-//                std::ifstream  file(linuxAppInfo.actions);
-//                if (file.is_open()) {
-//                    std::stringstream buffer;
-//                    buffer << file.rdbuf();
-//                    std::string content = buffer.str();
-//                    parse_and_set_environment(content);
-//                }
-//            }
-
-
             if (!linuxAppInfo.actions.empty()) {
                 set_environment_variable_from_file(linuxAppInfo.actions);
             }
@@ -96,3 +85,25 @@
         return -1;
     }
 
+
+int linux_app_process_manager::get_pid_by_exec(std::string& exec) {
+      std::string command = "ps -ef | grep " + exec + " | grep -v grep | awk '{print $2}'";
+      int pid;
+      FILE* pipe = popen(command.c_str(), "r");
+      if (!pipe) {
+          std::cerr << "popen() failed!" << std::endl;
+          return -1;
+      }
+      char buffer[128];
+      if (fgets(buffer, 128, pipe) != nullptr) {
+          if (std::sscanf(buffer, "%d", &pid) == 1) {
+              std::cout << "PID: " << pid << std::endl;
+              pclose(pipe);
+              return pid;
+          } else {
+              std::cerr << "Failed to read PID from the command output." << std::endl;
+          }
+      }
+      pclose(pipe);
+      return -1;
+  }
