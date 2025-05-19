@@ -56,22 +56,22 @@ namespace bos::framework::em {
         void remove_pid(pid_t pid);
 
     private:
-        std::string get_executable_path(const std::string& appPath);
-        std::vector<std::string> get_library_paths(const std::string& execPath);
-        void add_path_to_env(const char* envVar, const std::vector<std::string>& paths);
-        void set_ld_library_path(const std::string& exec_path);
+//        std::string get_executable_path(const std::string& appPath);
+//        std::vector<std::string> get_library_paths(const std::string& execPath);
+//        void add_path_to_env(const char* envVar, const std::vector<std::string>& paths);
+//        void set_ld_library_path(const std::string& exec_path);
 
     private:
-        std::vector<std::pair<std::string, std::string>> parse_environment_string(const std::string& env_str);
-        void set_environment_variable(const std::string& key, const std::string&  value);
-
-        void set_environment_variable(const std::vector<std::pair<std::string, std::string>>& env_vars);
-
-        void parse_and_set_environment(const std::string& env_str);
-
-        void set_environment_variable_from_file(const std::string& filePath);
-        std::string trim(const std::string& str);
-        void current_process_env();
+//        std::vector<std::pair<std::string, std::string>> parse_environment_string(const std::string& env_str);
+//        void set_environment_variable(const std::string& key, const std::string&  value);
+//
+//        void set_environment_variable(const std::vector<std::pair<std::string, std::string>>& env_vars);
+//
+//        void parse_and_set_environment(const std::string& env_str);
+//
+//        void set_environment_variable_from_file(const std::string& filePath);
+//        std::string trim(const std::string& str);
+//        void current_process_env();
     private:
         std::map<std::string, pid_t> processes;
         asio::signal_set signals_;

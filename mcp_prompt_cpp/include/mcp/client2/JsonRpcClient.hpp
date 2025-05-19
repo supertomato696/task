@@ -187,6 +187,7 @@
 #include <future>
 #include <unordered_map>
 #include <mutex>
+#include <shared_mutex>
 
 #include "protocol/McpJsonRpc.hpp"
 #include "transport/ITransport.hpp"
@@ -204,7 +205,7 @@ public:
     template<typename ParamsT, typename ResultT>
     ResultT call(const std::string& method, const ParamsT& params)
     {
-        protocol::Id id = nextId();
+        protocol::RequestId id = nextId();
         auto req = protocol::makeJsonRpcRequest(id, method, nlohmann::json(params));
 
         std::promise<nlohmann::json> prom;
@@ -221,22 +222,27 @@ public:
     template<typename ParamsT, typename ResultT>
     std::future<ResultT> callAsync(const std::string& method, const ParamsT& params)
     {
-        protocol::Id id = nextId();
+        protocol::RequestId id = nextId();
         auto req = protocol::makeJsonRpcRequest(id, method, nlohmann::json(params));
 
         auto pend = std::make_shared<Pending>();
-        std::future<ResultT> fut =
-            pend->prom.get_future().then(
-                [](std::future<nlohmann::json> f){
-                    return f.get().template get<ResultT>();
-                });
+        // std::future<ResultT> fut =
+        //     pend->prom.get_future().then(
+        //         [](std::future<nlohmann::json> f){
+        //             return f.get().template get<ResultT>();
+        //         });
 
         {
             std::scoped_lock lock(mtx_);
             inflight_[id] = pend;
+
+            tx_.send(req);
         }
-        tx_.send(req);
-        return fut;
+        auto fut = inflight_[id]->prom.get_future();
+        return std::async(std::launch::deferred, [fut = std::move(fut)] () mutable {
+            auto j = fut.get();
+            return j.get<ResultT>();
+        });
     }
 
     /* 订阅服务器通知（method → cb(json params)) */
@@ -257,14 +263,14 @@ private:
         explicit Pending(std::promise<nlohmann::json>& p):prom(std::move(p)){}
     };
 
-    protocol::Id nextId() {
+    protocol::RequestId nextId() {
         return static_cast<std::int64_t>(idGen_++);
     }
 
     /* state */
     transport::ITransport&                    tx_;
     std::atomic_uint64_t                      idGen_{1};
-    std::unordered_map<protocol::Id,
+    std::unordered_map<protocol::RequestId,
                        std::shared_ptr<Pending>> inflight_;
     std::mutex                                mtx_;
 

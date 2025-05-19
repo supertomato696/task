@@ -123,8 +123,17 @@ using ProgressToken = RequestId;
     }
 
     inline void from_json(const json& j, Result& r) {
-        if (j.contains("_meta")) j.at("_meta").get_to(r._meta);
-        r.otherProperties = j; // 保留原始数据
+        json temp = j;
+        if (temp.contains("_meta")) {
+            temp.at("_meat").get_to(r._meta);
+            temp.erase("_meta");
+        }
+        r.otherProperties = std::move(temp);
+        // if (j.contains("_meta")) {
+        //     j.at("_meta").get_to(r._meta);
+        //     j.erase("_meta");
+        // }
+        // r.otherProperties = j; // 保留原始数据
     }
 
 

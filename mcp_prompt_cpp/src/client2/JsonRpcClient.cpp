@@ -183,10 +183,11 @@
 
 #include "mcp/client2/JsonRpcClient.hpp"
 #include <iostream>
+#include <shared_mutex>
 
 using namespace mcp::client2;
-using protocol::Id;
-using protocol::json;
+using mcp::protocol::RequestId;
+using json = nlohmann::json;
 
 /* ----------- 收包 ------------ */
 void JsonRpcClient::deliver(const json& msg)
@@ -195,14 +196,14 @@ void JsonRpcClient::deliver(const json& msg)
     if(!msg.contains("id") && msg.contains("method")){
         std::string m  = msg["method"];
         json        p  = msg.value("params", json::object());
-        std::shared_lock sl(notifyMtx_);
+        std::shared_lock<std::shared_mutex> sl(notifyMtx_);
         if(auto it = notifyMap_.find(m); it != notifyMap_.end())
             it->second(p);
         return;
     }
 
     /* (2) Response / Error */
-    Id   id;    json payload;
+    RequestId   id;    json payload;
     bool okResp = protocol::parseResponse(msg, id, payload);
     bool okErr  = protocol::parseError   (msg, id, payload);
     if(!okResp && !okErr) return;                // 非法包

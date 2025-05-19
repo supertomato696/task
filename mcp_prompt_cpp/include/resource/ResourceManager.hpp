@@ -37,7 +37,7 @@ public:
     readResource(const std::string& uri);     // throw if no resolver
 
     /* ------------ subscription for change notification ------------ */
-    void subscribe  (const std::string& uri, UpdatedCb cb);
+    void subscribe(const std::string& uri, UpdatedCb cb);
     void unsubscribe(const std::string& uri);
 
     /* ------------ polling (for local‑fs resolvers) ------------ */

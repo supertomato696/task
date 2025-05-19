@@ -60,7 +60,47 @@ using json = nlohmann::json;
 
 namespace mcp::protocol {
 
-    
+    using RequestId = std::variant<std::monostate, int64_t, std::string>;
+
+    /* tiny helper 把 Id → json */
+    inline json idToJson(const RequestId& id) {
+        return std::visit([](auto&& v) -> json {
+            using T = std::decay_t<decltype(v)>;
+            if constexpr (std::is_same_v<T, std::monostate>) {
+                return nullptr; // 或 json::object() 根据协议要求
+            } else {
+                return json(v); // 正常处理 int/string
+            }
+        }, id);
+    }
+
+
+    inline void to_json(nlohmann::json& j, const RequestId& id) {
+        j = std::visit([](auto&& v) -> nlohmann::json {
+            using T = std::decay_t<decltype(v)>;
+            if constexpr (std::is_same_v<T, std::monostate>) {
+                return nullptr; // 或 json::object() 根据协议要求
+            } else {
+                return nlohmann::json(v); // 正常处理 int/string
+            }
+        }, id);
+    }
+
+    /* -------  id 解析工具  ------- */
+    inline void from_json(const nlohmann::json& j, RequestId& id) {
+        if (j.contains("id")) {
+            if (j["id"].is_number_integer()) {
+                id = j["id"].get<int64_t>();
+            } else if (j["id"].is_string()) {
+                id = j["id"].get<std::string>();
+            } else {
+                throw std::invalid_argument("Invalid type for 'id' field");
+            }
+        } else {
+            id = {}; // empty (std::monostate)
+        }
+    }
+
 // ===== JSON-RPC Error Object =====
 struct JSONRPCError {
     int code;
@@ -121,6 +161,7 @@ inline void from_json(const json& j, JSONRPCNotification& n) {
 struct JSONRPCResponse {
     std::string jsonrpc = "2.0";
     std::variant<std::string, int> id;
+    // RequestId id;
     json result;
 };
 
@@ -276,46 +317,6 @@ inline json makeJsonRpcError(const JsonRpcId& id,
     };
 }
 
-    using RequestId = std::variant<std::monostate, int64_t, std::string>;
-
-/* tiny helper 把 Id → json */
-inline json idToJson(const RequestId& id) {
-    return std::visit([](auto&& v) -> json {
-        using T = std::decay_t<decltype(v)>;
-        if constexpr (std::is_same_v<T, std::monostate>) {
-            return nullptr; // 或 json::object() 根据协议要求
-        } else {
-            return json(v); // 正常处理 int/string
-        }
-    }, id);
-}
-
-
-    inline void to_json(nlohmann::json& j, const RequestId& id) {
-    j = std::visit([](auto&& v) -> nlohmann::json {
-        using T = std::decay_t<decltype(v)>;
-        if constexpr (std::is_same_v<T, std::monostate>) {
-            return nullptr; // 或 json::object() 根据协议要求
-        } else {
-            return nlohmann::json(v); // 正常处理 int/string
-        }
-    }, id);
-}
-
-    /* -------  id 解析工具  ------- */
-    inline void from_json(const nlohmann::json& j, RequestId& id) {
-    if (j.contains("id")) {
-        if (j["id"].is_number_integer()) {
-            id = j["id"].get<int64_t>();
-        } else if (j["id"].is_string()) {
-            id = j["id"].get<std::string>();
-        } else {
-            throw std::invalid_argument("Invalid type for 'id' field");
-        }
-    } else {
-        id = {}; // empty (std::monostate)
-    }
-}
 
 
 /* -------  构造器  ------- */
@@ -429,17 +430,17 @@ makeJsonRpcError(const RequestId& id,
     };
 }
 
-inline bool parseResponse(const json& j, Id& outId, json& outResult)
+inline bool parseResponse(const json& j, RequestId& outId, json& outResult)
 {
     if(!j.is_object() || !j.contains("result")) return false;
-    outId     = j.value("id", Id{});
+    outId     = j.value("id", RequestId{});
     outResult = j["result"];
     return true;
 }
-inline bool parseError(const json& j, Id& outId, json& outError)
+inline bool parseError(const json& j, RequestId& outId, json& outError)
 {
     if(!j.is_object() || !j.contains("error")) return false;
-    outId     = j.value("id", Id{});
+    outId     = j.value("id", RequestId{});
     outError  = j["error"];
     return true;
 }

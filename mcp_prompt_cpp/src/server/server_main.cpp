@@ -26,8 +26,8 @@ int main()
         "hello_prompt", "打招呼",
         {{"name"}},     // arguments
         {
-            {protocol::Role::system,    protocol::TextContent{"你是助手。"}},
-            {protocol::Role::assistant, protocol::TextContent{"你好 {{name}}!"}}
+            {protocol::Role::User,    protocol::TextContent{"你是助手。"}},
+            {protocol::Role::Assistant, protocol::TextContent{"你好 {{name}}!"}}
         }
     });
     prompt::PromptService promptSvc(promptStore);

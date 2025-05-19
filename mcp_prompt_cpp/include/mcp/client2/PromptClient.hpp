@@ -4,11 +4,12 @@
 #include <future>
 #include <optional>
 #include <shared_mutex>
+#include <transport/ITransport.hpp>
 
 namespace mcp::client2 {
 
 /**
- * PromptClient — 封装 prompts/* 子协议
+ * PromptClient — 封装 prompts 子协议
  *
  * ✦ listPrompts        同步 / 异步
  * ✦ getPrompt          同步 / 异步
@@ -50,7 +51,8 @@ public:
     {
         ListPromptsRequest req;
         if (cursor) req.params.cursor = *cursor;
-        return rpc_.callAsync<ListPromptsRequest, ListPromptsResult>(req);
+//        return rpc_.callAsync<ListPromptsRequest, ListPromptsResult>(req);
+		return rpc_.callAsync<decltype(req.params), ListPromptsResult>(req.method, req.params);
     }
 
     /* -------------------------------------------------- prompts/get */

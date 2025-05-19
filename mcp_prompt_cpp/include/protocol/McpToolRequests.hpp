@@ -75,6 +75,7 @@ inline void from_json(const json& j, Tool& t) {
     }
 }
 
+
 // ===== ListToolsRequest / ListToolsResult =====
 struct ListToolsRequest {
     std::string method = "tools/list";
