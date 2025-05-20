@@ -5,12 +5,24 @@
 #include <cstdlib>
 
 #include "EnvManager.hpp"
-#include "LinuxAppInfo.hpp"
-#include "utils_env.hpp"
+#include "LinuxAppInfor.hpp"      // 你的 LinuxAppInfo 声明
+#include "utils_env.hpp"          // snapshotEnv / printDiff
+
+extern char **environ;            // <- 必须声明
+
+// 把父进程环境变量采集为 vector<string>
+static std::vector<std::string> collectParentEnv()
+{
+    std::vector<std::string> vec;
+    for (char **p = environ; *p; ++p)
+        vec.emplace_back(*p);     // *p 是 "KEY=VAL"
+    return vec;
+}
 
 int main()
 {
     namespace fs = std::filesystem;
+
     // ---------- 1. 设置父环境 ----------
     putenv(const_cast<char*>("FOO=parent"));
     putenv(const_cast<char*>("BAR=parent"));
@@ -24,28 +36,28 @@ int main()
     LinuxAppInfo app;
     app.instanceId = "dummy";
     app.execPath   = "/bin/true";
-    app.entrance   = {};
-    app.envInline  = "FOO=inline,BAR=inline";    // 优先级最高
+    app.entrance   = {};                               // 无额外参数
+    app.envInline  = "FOO=inline,BAR=inline";          // inline 优先级最高
     app.envFile    = tmp.string();
 
-    // ---------- 4. 对比前后 ----------
-    auto before = snapshotEnv(std::vector<std::string>{environ, nullptr});
-    auto afterVec = EnvManager::buildEnvironment(app);
-    auto after  = snapshotEnv(afterVec);
+    // ---------- 4. 对比前 / 后 ----------
+    auto beforeVec = collectParentEnv();               // 修正点
+    auto before    = snapshotEnv(beforeVec);
+
+    auto afterVec  = EnvManager::buildEnvironment(app);
+    auto after     = snapshotEnv(afterVec);
 
     std::cout << "Environment diff:\n";
     printDiff(before, after);
 
+    // ---------- 5. 验证 LD_LIBRARY_PATH 补丁 ----------
+    const char* beforeLd = ::getenv("LD_LIBRARY_PATH");
+    std::cout << "\nLD_LIBRARY_PATH (parent) : "
+              << (beforeLd ? beforeLd : "(unset)") << '\n';
+
+    std::cout << "LD_LIBRARY_PATH (patched): "
+              << after["LD_LIBRARY_PATH"] << '\n';
+
     fs::remove(tmp);
-
-    // … demo_env.cpp 最后部分
-auto beforeLd = getenv("LD_LIBRARY_PATH");
-std::cout << "LD_LIBRARY_PATH  (parent) : "
-          << (beforeLd ? beforeLd : "(unset)") << '\n';
-
-auto afterMap = snapshotEnv(afterVec);
-std::cout << "LD_LIBRARY_PATH  (patched): "
-          << afterMap["LD_LIBRARY_PATH"] << '\n';
-
     return 0;
 }

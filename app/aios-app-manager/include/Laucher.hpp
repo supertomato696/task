@@ -13,6 +13,7 @@
 
 #include <cerrno>
 #include <cstring>
+
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -20,7 +21,7 @@
 #include <vector>
 
 #include "EnvManager.hpp"      // 依赖你的 header-only 环境变量工具
-#include "LinuxAppInfo.hpp"    // execPath / entrance / nice ...
+#include "LinuxAppInfor.hpp"    // execPath / entrance / nice ...
 
 /**
  * 负责 fork+exec 启动进程，仅做“启动”这一件事。
@@ -62,8 +63,8 @@ public:
 
             // 会话 & nice
             ::setsid();
-            if (app.nice && *app.nice != 0) {
-                ::setpriority(PRIO_PROCESS, 0, *app.nice);
+            if (app.priority && *app.priority != 0) {
+                ::setpriority(PRIO_PROCESS, 0, *app.priority);
             }
 
             // -------- argv ----------

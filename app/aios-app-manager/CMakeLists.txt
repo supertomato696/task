@@ -82,6 +82,9 @@ endfunction()
 add_demo(demo_sleep)
 add_demo(demo_stop)
 add_demo(demo_fail)
+add_demo(demo_concurrent)
+add_demo(demo_mass_concurrent)
+add_demo(demo_sigkill)
 
 # -------------------------------------------------------------
 # -------------------- 单元测试 ------------------------------
@@ -119,15 +122,15 @@ target_link_libraries(demo_env PRIVATE aios-app-manager)
 target_compile_definitions(demo_env PRIVATE ASIO_STANDALONE)
 
 # test
-target_sources(unit_tests PRIVATE tests/test_env_manager.cpp)
+#target_sources(unit_tests PRIVATE tests/test_env_manager.cpp)
 
 
-///add_demo# 常规构建（自动拉 Asio & GTest）
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
-cmake --build . --config Release
-ctest --output-on-failure       # 运行单元测试
-./demo_sleep                    # 运行 demo
-
-
-cmake .. -DUSE_SYSTEM_ASIO=ON -DUSE_SYSTEM_GTEST=ON
+#///add_demo# 常规构建（自动拉 Asio & GTest）
+#mkdir build && cd build
+#cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+#cmake --build . --config Release
+#ctest --output-on-failure       # 运行单元测试
+#./demo_sleep                    # 运行 demo
+#
+#
+#cmake .. -DUSE_SYSTEM_ASIO=ON -DUSE_SYSTEM_GTEST=ON

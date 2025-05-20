@@ -7,9 +7,9 @@
 #include <sys/types.h>
 #endif
 
-namespace lapm {
 
-enum class ProcessState { Starting, Running, Stopping, Exited, Unknown };
+
+enum class ProcessState { Starting, Running, Stopping, Exited, Unknown, Failed };
 
 struct ProcessInfo {
 #ifdef __linux__
@@ -21,7 +21,7 @@ struct ProcessInfo {
     std::string                             instanceId;
     std::string                   execPath;
     std::chrono::steady_clock::time_point   startTime;
+    std::chrono::steady_clock::time_point   endTime;
     int                                     exitCode{0};
 };
 
-} // namespace lapm

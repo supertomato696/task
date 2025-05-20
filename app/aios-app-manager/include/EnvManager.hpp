@@ -45,10 +45,12 @@
 #include <unordered_set>
 #include <vector>
 
+#include "LinuxAppInfor.hpp"
+
 extern char **environ; // POSIX global
 
 // Forward decl of LinuxAppInfo (from other header)
-struct LinuxAppInfo;
+
 
 class EnvManager {
 public:

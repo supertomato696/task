@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <vector>
 #include <optional>
@@ -11,4 +12,3 @@
     bool                                  autostart{false};
 };
 
-    };

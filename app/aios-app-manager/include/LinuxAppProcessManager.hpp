@@ -9,10 +9,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Launcher.hpp"
+#include "Laucher.hpp"
 #include "ProcessMonitor.hpp"
 #include "ProcessTypes.hpp"
-#include "LinuxAppInfo.hpp"
+#include "LinuxAppInfor.hpp"
 
 class LinuxAppProcessManager {
 public:
@@ -54,5 +54,5 @@ private:
     std::unordered_map<pid_t,  std::string>             pid2id_;      // pid -> id
     std::vector<ExitCallback>                           callbacks_;
 
-    static constexpr std::chrono::milliseconds kGracefulStopTimeout{3000};
+    static constexpr std::chrono::milliseconds kGracefulStopTimeout{1000};
 };
