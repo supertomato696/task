@@ -3,8 +3,10 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <thread>
 
 #include "LinuxAppProcessManager.hpp"
+#include "SignalHandler.hpp"
 
 using namespace std::chrono;
 
@@ -20,13 +22,28 @@ int main() {
     LinuxAppProcessManager pm{io};
 
     // ---------- 回调 ----------
-    pm.registerExitCallback([](const ProcessInfo& p) {
+    pm.registerExitCallback([](const ChildProcessInfo& p) {
         auto dur = p.endTime - p.startTime;
         std::cout << "[EXIT] " << std::setw(12) << p.instanceId
                   << "  pid=" << p.pid
                   << "  code=" << p.exitCode
                   << "  uptime=" << toSec(dur) << '\n';
     });
+
+
+    SignalHandler::instance().register_default_signals();
+    SignalHandler::instance().register_handler(SIGINT, [&io](int signo) {
+        io.stop();
+        std::cout << "SIGINT (Ctrl+C) caught, exiting...\n";
+        // exit(0);
+    });
+    SignalHandler::instance().register_handler(SIGTERM, [](int signo) {
+        std::cout << "SIGTERM caught\n";
+    });
+
+    SignalHandler::instance().start_worker();
+
+    std::cout << "PID: " << getpid() << ". Try kill -SIGINT <pid> or Ctrl+C\n";
 
     // ---------- 启动 3 个进程 ----------
     const struct {
@@ -68,6 +85,10 @@ int main() {
         pm.stop("sleep_short1");
         pm.stop("sleep_short2");
     });
+
+
+
+
 
     io.run();
     std::cout << "All done.\n";

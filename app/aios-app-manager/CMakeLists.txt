@@ -56,6 +56,7 @@ endif()
 add_library(aios-app-manager STATIC)
 target_sources(aios-app-manager PRIVATE
     src/LinuxAppProcessManager.cpp
+        src/SignalHandler.cpp
     # 如果你把 ProcessMonitor.cpp / Launcher.cpp 拆 cpp，请在此追加
 )
 target_include_directories(aios-app-manager PUBLIC
@@ -85,6 +86,7 @@ add_demo(demo_fail)
 add_demo(demo_concurrent)
 add_demo(demo_mass_concurrent)
 add_demo(demo_sigkill)
+add_demo(demo_signal)
 
 # -------------------------------------------------------------
 # -------------------- 单元测试 ------------------------------

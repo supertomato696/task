@@ -16,20 +16,20 @@
 
 class LinuxAppProcessManager {
 public:
-    using ExitCallback = std::function<void(const ProcessInfo&)>;
+    using ExitCallback = std::function<void(const ChildProcessInfo&)>;
 
     explicit LinuxAppProcessManager(asio::io_context& ctx);
 
     // ------------ lifecycle ------------
-    [[nodiscard]] ProcessInfo start  (const LinuxAppInfo& app);
+    [[nodiscard]] ChildProcessInfo start  (const LinuxAppInfo& app);
     void                       stop  (std::string_view instanceId);
     void                       stop  (const LinuxAppInfo& app)          { stop(app.instanceId); }
-    [[nodiscard]] ProcessInfo  restart(const LinuxAppInfo& app);
+    [[nodiscard]] ChildProcessInfo  restart(const LinuxAppInfo& app);
 
     // ------------ query ----------------
-    [[nodiscard]] ProcessInfo               query (std::string_view instanceId) const;
-    [[nodiscard]] ProcessInfo               query (const LinuxAppInfo& app) const { return query(app.instanceId); }
-    [[nodiscard]] std::vector<ProcessInfo>  list() const;
+    [[nodiscard]] ChildProcessInfo               query (std::string_view instanceId) const;
+    [[nodiscard]] ChildProcessInfo               query (const LinuxAppInfo& app) const { return query(app.instanceId); }
+    [[nodiscard]] std::vector<ChildProcessInfo>  list() const;
 
     // ------------ callback -------------
     void registerExitCallback(ExitCallback cb);
@@ -43,7 +43,7 @@ private:
 
     // -----------------------------------
     struct TimedEntry {
-        ProcessInfo                          info;
+        ChildProcessInfo                          info;
         std::shared_ptr<asio::steady_timer>  termTimer;   // nullptr == 未在停止流程
     };
 

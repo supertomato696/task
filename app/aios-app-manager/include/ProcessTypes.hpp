@@ -11,12 +11,10 @@
 
 enum class ProcessState { Starting, Running, Stopping, Exited, Unknown, Failed };
 
-struct ProcessInfo {
-#ifdef __linux__
+struct ChildProcessInfo {
+
     pid_t                                   pid{};
-#else
-    int                                     pid{};
-#endif
+
     ProcessState                            state{ProcessState::Unknown};
     std::string                             instanceId;
     std::string                   execPath;

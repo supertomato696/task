@@ -42,6 +42,9 @@ int main()
 
     // ---------- 4. 对比前 / 后 ----------
     auto beforeVec = collectParentEnv();               // 修正点
+    std::cout << "Environment before:\n";
+    for (const auto& e : beforeVec)
+        std::cout << e << '\n';
     auto before    = snapshotEnv(beforeVec);
 
     auto afterVec  = EnvManager::buildEnvironment(app);

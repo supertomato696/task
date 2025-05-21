@@ -5,6 +5,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "ProcessInfo.hpp"
+
 std::mutex mtx;
 std::condition_variable cv;
 bool signal_received = false;  // 用于标记信号是否接收
@@ -41,7 +43,9 @@ void signal_handler_thread() {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+  ProcessInfo processInfo(argc, argv);
+  processInfo.printAll();
     // 设置信号处理函数
     struct sigaction sa;
     sa.sa_handler = handle_signal;

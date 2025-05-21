@@ -7,7 +7,7 @@ int main() {
     asio::io_context io;
     LinuxAppProcessManager pm{io};
 
-    pm.registerExitCallback([](const ProcessInfo& p) {
+    pm.registerExitCallback([](const ChildProcessInfo& p) {
         std::cout << "[CALLBACK] " << p.instanceId
                   << " exited with code " << p.exitCode << '\n';
     });

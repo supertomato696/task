@@ -31,9 +31,9 @@ LinuxAppProcessManager::LinuxAppProcessManager(asio::io_context& ctx)
 // -------------------------------------------------------------
 //  start
 // -------------------------------------------------------------
-ProcessInfo LinuxAppProcessManager::start(const LinuxAppInfo& app)
+ChildProcessInfo LinuxAppProcessManager::start(const LinuxAppInfo& app)
 {
-    ProcessInfo pi;
+    ChildProcessInfo pi;
     pi.instanceId = app.instanceId;
     pi.execPath   = app.execPath;
     pi.state      = ProcessState::Starting;
@@ -84,22 +84,22 @@ void LinuxAppProcessManager::stop(std::string_view id)
         // if (::kill(pid, 0) == 0) ::kill(pid, SIGKILL);
 
         int status;
-pid_t result = waitpid(pid, &status, WNOHANG);
-if (result == 0) {
-    std::cout << "asyncWaitForProcessToStop" << " Process " << pid << " is still running, sending SIGKILL" << std::endl;
-    kill(-pid, SIGKILL);
-    waitpid(pid, &status, 0);
-}
+        pid_t result = waitpid(pid, &status, WNOHANG);
+        if (result == 0) {
+            std::cout << "asyncWaitForProcessToStop" << " Process " << pid << " is still running, sending SIGKILL" << std::endl;
+            kill(-pid, SIGKILL);
+            waitpid(pid, &status, 0);
+        }
 
 
-std::cout << "asyncWaitForProcessToStop" << " Stopped process " << pid << std::endl;
+        std::cout << "asyncWaitForProcessToStop" << " Stopped process " << pid << std::endl;
     });
 }
 
 // -------------------------------------------------------------
 //  restart = stop + start
 // -------------------------------------------------------------
-ProcessInfo LinuxAppProcessManager::restart(const LinuxAppInfo& app)
+ChildProcessInfo LinuxAppProcessManager::restart(const LinuxAppInfo& app)
 {
     stop(app.instanceId);
     /*** 小延迟可选：防止 pid 复用；此处省略，直接重启 ***/
@@ -109,7 +109,7 @@ ProcessInfo LinuxAppProcessManager::restart(const LinuxAppInfo& app)
 // -------------------------------------------------------------
 //  query & list
 // -------------------------------------------------------------
-ProcessInfo LinuxAppProcessManager::query(std::string_view id) const
+ChildProcessInfo LinuxAppProcessManager::query(std::string_view id) const
 {
     std::shared_lock lk(mu_);
     if (auto it = table_.find(std::string(id)); it != table_.end())
@@ -117,9 +117,9 @@ ProcessInfo LinuxAppProcessManager::query(std::string_view id) const
     return {};                                    // Unknown
 }
 
-std::vector<ProcessInfo> LinuxAppProcessManager::list() const
+std::vector<ChildProcessInfo> LinuxAppProcessManager::list() const
 {
-    std::vector<ProcessInfo> v;
+    std::vector<ChildProcessInfo> v;
     std::shared_lock lk(mu_);
     v.reserve(table_.size());
     for (auto& [_, ent] : table_) v.push_back(ent.info);
@@ -141,7 +141,7 @@ void LinuxAppProcessManager::registerExitCallback(ExitCallback cb)
 void LinuxAppProcessManager::onChildExit(pid_t pid, int rawStatus)
 {
     std::vector<ExitCallback> cbsCopy;
-    ProcessInfo               infoCopy;
+    ChildProcessInfo               infoCopy;
 
     {
         std::unique_lock lk(mu_);

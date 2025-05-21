@@ -24,7 +24,7 @@ int main() {
     std::uniform_int_distribution<int> distSleep(5, 20);  // 每进程睡眠 5~20s
 
     // ---------- 回调 ----------
-    pm.registerExitCallback([](const ProcessInfo& p) {
+    pm.registerExitCallback([](const ChildProcessInfo& p) {
         std::cout << "[EXIT] " << p.instanceId
                   << " pid=" << p.pid
                   << " code=" << p.exitCode
