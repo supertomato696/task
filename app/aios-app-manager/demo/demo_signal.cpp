@@ -32,7 +32,7 @@ int main() {
 
     std::cout << "Worker running. PID: " << getpid() << std::endl;
     while (true) {
-        // 你主线程可以忙别的，不用管信号
+        // 主线程可以忙别的，不用管信号
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
 

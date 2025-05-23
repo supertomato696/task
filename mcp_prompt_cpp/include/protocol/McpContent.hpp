@@ -16,6 +16,14 @@ enum class Role {
     Assistant   // 对应协议 "assistant"
 };
 
+    inline std::string to_string(Role role) {
+        switch (role) {
+            case Role::User: return "user";
+            case Role::Assistant: return "assistant";
+            default: throw std::invalid_argument("Invalid Role value");
+        }
+    }
+
 // 枚举 ⇄ JSON 转换
 inline void to_json(nlohmann::json& j, Role role) {
     switch (role) {

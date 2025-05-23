@@ -87,6 +87,8 @@ add_demo(demo_concurrent)
 add_demo(demo_mass_concurrent)
 add_demo(demo_sigkill)
 add_demo(demo_signal)
+add_demo(demo_double_fork)
+add_demo(demo_duplicate)
 
 # -------------------------------------------------------------
 # -------------------- 单元测试 ------------------------------

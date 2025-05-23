@@ -33,6 +33,12 @@ LinuxAppProcessManager::LinuxAppProcessManager(asio::io_context& ctx)
 // -------------------------------------------------------------
 ChildProcessInfo LinuxAppProcessManager::start(const LinuxAppInfo& app)
 {
+    {
+        std::shared_lock lock(mu_);
+        if (auto it = table_.find(app.instanceId); it != table_.end()) {
+            return it->second.info;
+        }
+    }
     ChildProcessInfo pi;
     pi.instanceId = app.instanceId;
     pi.execPath   = app.execPath;
@@ -163,6 +169,7 @@ void LinuxAppProcessManager::onChildExit(pid_t pid, int rawStatus)
 
         pid2id_.erase(pidIt);
         // 若想删除表项，可 table_.erase(pidIt->second);
+        // instance-callback
     }
 
     for (auto& cb : cbsCopy)

@@ -64,7 +64,7 @@ proto::PromptMessage MultiModalAssembler::assemble(const std::string& role,
                                                    const std::string& raw) const
 {
     proto::PromptMessage msg;
-    msg.role = role;
+    msg.role = (role == "user") ? proto::Role::User : proto::Role::Assistant;
 
     /* 1. 本地文件 URI -> audio/image/resource */
     if (isUri(raw) && raw.rfind("file://",0)==0)

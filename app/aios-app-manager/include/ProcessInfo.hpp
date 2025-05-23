@@ -64,6 +64,7 @@ public:
 
         // 命令行完整字符串
         std::ifstream cmdline("/proc/self/cmdline");
+        if (cmdline) {
         std::string raw;
         std::getline(cmdline, raw, '\0');
         std::ostringstream oss;
@@ -71,6 +72,8 @@ public:
             oss << arg << " ";
         }
         cmdlineStr_ = oss.str();
+        }
+
 
         // 进程状态
         std::ifstream statf("/proc/self/stat");
@@ -175,6 +178,7 @@ private:
     // 通过 pid 获取进程名（仅限 Linux/proc）
     static std::string getProcessName(int pid) {
         std::ifstream statf("/proc/" + std::to_string(pid) + "/comm");
+        if (!statf) return {};
         std::string name;
         std::getline(statf, name);
         return name;
@@ -183,31 +187,45 @@ private:
     // 获取进程启动时间
     static std::string getProcStartTime() {
         // 读取 starttime (clock ticks since boot)
-        std::ifstream stat("/proc/self/stat");
-        std::string dummy;
         long long starttime = 0;
+        std::ifstream stat("/proc/self/stat");
+        if (stat)  {
+                      std::string dummy;
+//        long long starttime = 0;
         for (int i = 0; i < 21 && stat; ++i)
             stat >> dummy;
         stat >> starttime;
+        };
+
 
         // 读取系统启动时间
         std::ifstream statfile("/proc/stat");
         std::string label;
         long long btime = 0;
+        if (statfile) {
         while (statfile >> label) {
             if (label == "btime") {
                 statfile >> btime;
                 break;
             }
         }
-
-        long ticksPerSec = sysconf(_SC_CLK_TCK);
+                long ticksPerSec = sysconf(_SC_CLK_TCK);
         long long absStart = btime + starttime / ticksPerSec;
         if (absStart == 0) return {};
         std::time_t tt = absStart;
         char buf[64]{};
         if (std::strftime(buf, sizeof(buf), "%F %T", std::localtime(&tt)))
             return buf;
+        return {};
+        }
+
+//        long ticksPerSec = sysconf(_SC_CLK_TCK);
+//        long long absStart = btime + starttime / ticksPerSec;
+//        if (absStart == 0) return {};
+//        std::time_t tt = absStart;
+//        char buf[64]{};
+//        if (std::strftime(buf, sizeof(buf), "%F %T", std::localtime(&tt)))
+//            return buf;
         return {};
     }
 };

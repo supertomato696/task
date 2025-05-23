@@ -1,10 +1,13 @@
 #include "prompt/PromptStore.hpp"
 #include <openssl/md5.h>             // 用于生成实例 key 的哈希
+#include <openssl/evp.h>
 #include <sstream>
 #include <iomanip>
 
 #include <prompt/TemplateEngine.hpp>
 #include "prompt/PromptTemplate.hpp"
+
+#include "protocol/McpContent.hpp"
 
 //using namespace mcp::prompt;
 namespace proto = mcp::protocol;
@@ -94,7 +97,7 @@ PromptStore::renderPrompt(const std::string& name,
         if (std::holds_alternative<proto::TextContent>(msg.content))
         {
             auto tc = std::get<proto::TextContent>(msg.content);
-            msg = mma.assemble(msg.role, tc.text);
+            msg = mma.assemble(proto::to_string(msg.role), tc.text);
         }
 
         rendered.push_back(std::move(msg));
@@ -142,13 +145,34 @@ std::string PromptStore::makeKey(const std::string& name,
     std::string concat = name;
     for (auto& [k,v] : kv) { concat += "|" + k + "=" + v; }
 
-    unsigned char md5[16];
-    MD5(reinterpret_cast<const unsigned char*>(concat.data()),
-        concat.size(), md5);
+//    unsigned char md5[16];
+//    MD5(reinterpret_cast<const unsigned char*>(concat.data()),
+//        concat.size(), md5);
+//
+//    std::ostringstream oss;
+//    for (unsigned char c : md5) oss << std::hex << std::setw(2)
+//                                    << std::setfill('0') << int(c);
+//    return name + "|" + oss.str();
+     // 替换 MD5 调用为 EVP 接口
+    unsigned char digest[EVP_MAX_MD_SIZE];
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(ctx, EVP_md5(), nullptr);
+    EVP_DigestUpdate(ctx, concat.data(), concat.size());
+
+    unsigned int digestLen = 0;
+    EVP_DigestFinal_ex(ctx, digest, &digestLen);
+    EVP_MD_CTX_free(ctx);
+
+    // 确保长度符合 MD5 的 16 字节
+    if (digestLen != 16) {
+        throw std::runtime_error("Unexpected MD5 digest length");
+    }
 
     std::ostringstream oss;
-    for (unsigned char c : md5) oss << std::hex << std::setw(2)
-                                    << std::setfill('0') << int(c);
+    for (unsigned int i = 0; i < digestLen; ++i) {  // 注意循环变量类型
+        oss << std::hex << std::setw(2) << std::setfill('0')
+            << static_cast<int>(digest[i]);
+    }
     return name + "|" + oss.str();
 }
 
