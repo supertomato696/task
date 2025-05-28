@@ -5,10 +5,11 @@
 #pragma once
 #include <asio/io_context.hpp>
 #include <asio/signal_set.hpp>
+#include <asio/dispatch.hpp>
 
 #include <sys/wait.h>
 #include <unistd.h>
-
+#include <iostream>
 #include <functional>
 #include <system_error>
 #include <vector>
@@ -26,6 +27,8 @@
  *   }};
  */
 class ProcessMonitor {
+private:
+    inline static const std::string TAG{"ProcessMonitor"};
 public:
     using ExitHandler = std::function<void(pid_t /*pid*/, int /*raw status*/)>;
 
@@ -56,8 +59,18 @@ private:
             int   status = 0;
             pid_t pid    = ::waitpid(-1, &status, WNOHANG);
             if (pid > 0) {
+                asio::dispatch(ctx_, [this, pid, status] {
+                try {
+     // 通知上层
+                    if (onExit_) onExit_(pid, status);
+                } catch (const std::exception& e) {
+                std::cerr << TAG << " Exception in exit handler: " << e.what() << std::endl;
+                } catch (...) {
+                    std::cerr << TAG << "  unknown exception in exit handler" << std::endl;
+                }
+                });
                 // 通知上层
-                if (onExit_) onExit_(pid, status);
+                // if (onExit_) onExit_(pid, status);
             } else if (pid == 0) {
                 // 没有更多可收割
                 break;
@@ -65,6 +78,8 @@ private:
                 // pid < 0
                 if (errno == ECHILD) break;   // 没子进程
                 // 其他错误：短暂忽略，避免 busy loop
+                std::error_code ec(errno, std::generic_category());
+                std::cout << TAG <<  "Error during waitpid: " << ec.message() <<  std::endl;
                 break;
             }
         }

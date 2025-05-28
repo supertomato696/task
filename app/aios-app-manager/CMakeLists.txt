@@ -74,21 +74,21 @@ target_link_libraries(aios-app-manager
 # -------------------------------------------------------------
 # ----------- DEMO 可执行文件 ------------------------------
 # -------------------------------------------------------------
-function(add_demo name)
-    add_executable(${name} demo/${name}.cpp)
-    target_link_libraries(${name} PRIVATE aios-app-manager)
-    target_compile_definitions(${name} PRIVATE ASIO_STANDALONE)
-endfunction()
-
-add_demo(demo_sleep)
-add_demo(demo_stop)
-add_demo(demo_fail)
-add_demo(demo_concurrent)
-add_demo(demo_mass_concurrent)
-add_demo(demo_sigkill)
-add_demo(demo_signal)
-add_demo(demo_double_fork)
-add_demo(demo_duplicate)
+#function(add_demo name)
+#    add_executable(${name} demo/${name}.cpp)
+#    target_link_libraries(${name} PRIVATE aios-app-manager)
+#    target_compile_definitions(${name} PRIVATE ASIO_STANDALONE)
+#endfunction()
+#
+#add_demo(demo_sleep)
+#add_demo(demo_stop)
+#add_demo(demo_fail)
+#add_demo(demo_concurrent)
+#add_demo(demo_mass_concurrent)
+#add_demo(demo_sigkill)
+#add_demo(demo_signal)
+#add_demo(demo_double_fork)
+#add_demo(demo_duplicate)
 
 # -------------------------------------------------------------
 # -------------------- 单元测试 ------------------------------
@@ -121,13 +121,15 @@ message(STATUS "Use system GTest:     ${USE_SYSTEM_GTEST}")
 message(STATUS "Install prefix:       ${CMAKE_INSTALL_PREFIX}")
 
 # demo
-add_executable(demo_env demo/demo_env.cpp)
-target_link_libraries(demo_env PRIVATE aios-app-manager)
-target_compile_definitions(demo_env PRIVATE ASIO_STANDALONE)
+#add_executable(demo_env demo/demo_env.cpp)
+#target_link_libraries(demo_env PRIVATE aios-app-manager)
+#target_compile_definitions(demo_env PRIVATE ASIO_STANDALONE)
 
 # test
 #target_sources(unit_tests PRIVATE tests/test_env_manager.cpp)
 
+
+add_subdirectory(demo)
 
 #///add_demo# 常规构建（自动拉 Asio & GTest）
 #mkdir build && cd build

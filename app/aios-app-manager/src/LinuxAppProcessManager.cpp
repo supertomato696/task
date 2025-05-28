@@ -81,6 +81,11 @@ void LinuxAppProcessManager::stop(std::string_view id)
 
     ::kill(pid, SIGTERM);
 
+    // // ------------------------
+    // pid2id_.erase(it->second.info.pid);
+    // table_.erase(it);
+    // // ---
+
     auto timer = std::make_shared<asio::steady_timer>(io_, kGracefulStopTimeout);
     it->second.termTimer = timer;
 
@@ -94,12 +99,31 @@ void LinuxAppProcessManager::stop(std::string_view id)
         if (result == 0) {
             std::cout << "asyncWaitForProcessToStop" << " Process " << pid << " is still running, sending SIGKILL" << std::endl;
             kill(-pid, SIGKILL);
-            waitpid(pid, &status, 0);
+//            waitpid(pid, &status, 0);  consume sigchld signal
         }
 
 
         std::cout << "asyncWaitForProcessToStop" << " Stopped process " << pid << std::endl;
     });
+}
+
+void LinuxAppProcessManager::stop(pid_t pid)
+{
+    std::string instanceId{};
+    {
+        std::shared_lock<std::shared_mutex> lock(mu_);
+        auto it = pid2id_.find(pid);
+        if (it == pid2id_.end()) {
+            std::cout << TAG <<   "  process is not running! pid: " << pid << std::endl;
+            return ;
+        }
+
+        instanceId = it->second;
+    }
+    stop(instanceId);
+
+
+    // auto it = pid2id_.find(pid);
 }
 
 // -------------------------------------------------------------
@@ -135,18 +159,34 @@ std::vector<ChildProcessInfo> LinuxAppProcessManager::list() const
 // -------------------------------------------------------------
 //  exit callback
 // -------------------------------------------------------------
-void LinuxAppProcessManager::registerExitCallback(ExitCallback cb)
+auto LinuxAppProcessManager::registerExitCallback(ExitCallback cb) -> CallbackId
 {
+
     std::unique_lock lk(mu_);
-    callbacks_.push_back(std::move(cb));
+    CallbackId id = nextCbId_++;
+    callbacks_.emplace(id, CbEntry{std::move(cb), std::nullopt});
+    return id;
 }
 
+auto LinuxAppProcessManager::registerExitCallback(std::string_view instancdId, ExitCallback cb) -> CallbackId
+{
+    std::unique_lock lk(mu_);
+    CallbackId id = nextCbId_++;
+    callbacks_.emplace(id, CbEntry{std::move(cb), std::string(instancdId)});
+    return id;
+}
+
+void LinuxAppProcessManager::removeExitCallback(CallbackId id) {
+    std::unique_lock lock(mu_);
+    callbacks_.erase(id);
+}
 // -------------------------------------------------------------
 //  SIGCHLD / waitpid handler
 // -------------------------------------------------------------
 void LinuxAppProcessManager::onChildExit(pid_t pid, int rawStatus)
 {
-    std::vector<ExitCallback> cbsCopy;
+    // std::vector<ExitCallback> cbsCopy;
+    std::unordered_map<CallbackId, CbEntry> cbsCopy;
     ChildProcessInfo               infoCopy;
 
     {
@@ -165,13 +205,22 @@ void LinuxAppProcessManager::onChildExit(pid_t pid, int rawStatus)
         if (ent.termTimer) ent.termTimer->cancel();
 
         infoCopy = ent.info;
-        cbsCopy  = callbacks_;
+        for (auto& [id, entry] : callbacks_) {
+            if (!entry.filter || (entry.filter && entry.filter == infoCopy.instanceId)) {
+                cbsCopy.emplace(id, entry);
+            }
+        }
+        // cbsCopy  = callbacks_;
 
         pid2id_.erase(pidIt);
-        // 若想删除表项，可 table_.erase(pidIt->second);
+        table_.erase(pidIt->second);
         // instance-callback
     }
 
     for (auto& cb : cbsCopy)
-        asio::post(io_, [cb, infoCopy] { cb(infoCopy); });
+        asio::post(io_, [cb, infoCopy] {
+            std::cout << "onChildExit" << " Calling exit callback for instance " << infoCopy.instanceId << std::endl;
+            if (cb.second.cb != nullptr)
+                cb.second.cb(infoCopy);
+        });
 }

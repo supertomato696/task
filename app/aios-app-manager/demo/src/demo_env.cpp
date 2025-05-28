@@ -5,8 +5,8 @@
 #include <cstdlib>
 
 #include "EnvManager.hpp"
-#include "LinuxAppInfor.hpp"      // 你的 LinuxAppInfo 声明
-#include "utils_env.hpp"          // snapshotEnv / printDiff
+#include "LinuxAppInfor.hpp"
+#include "utils_env.hpp"
 
 extern char **environ;            // <- 必须声明
 
