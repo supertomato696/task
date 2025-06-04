@@ -57,6 +57,7 @@ ChildProcessInfo LinuxAppProcessManager::start(const LinuxAppInfo& app)
     catch (const std::system_error& se) {
         pi.state    = ProcessState::Failed;
         pi.exitCode = -se.code().value();         // 负 errno
+        std::cout << "execve failed: " << se.what() << std::endl;
     }
     catch (const std::exception&) {
         pi.state    = ProcessState::Failed;

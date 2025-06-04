@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
+#include <iostream>
 #include <cerrno>
 #include <cstring>
 
@@ -32,6 +32,8 @@
  *   • seccomp / prctl / capabilities
  */
 class Launcher {
+private:
+    inline static  const std::string TAG { "Launcher" };
 public:
     [[nodiscard]] static pid_t start(const LinuxAppInfo& app) {
         // --------------------------------------------------
@@ -89,7 +91,7 @@ public:
 
             // -------- exec ----------
             ::execve(app.execPath.c_str(), argv.data(), envp.data());
-
+            std::cout << TAG << ": execve failed " << strerror(errno)<< std::endl;
             // 执行到此说明 exec 失败 → 将 errno 写到管道后退出
             int err = errno;
             ::write(errPipe[1], &err, sizeof(err));
