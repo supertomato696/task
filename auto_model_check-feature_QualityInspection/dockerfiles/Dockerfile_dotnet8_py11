@@ -1,0 +1,15 @@
+FROM 10.0.117.68/byd_geoeva/dotnet_runtime_with_python11:v8.0
+
+# 指定工作目录
+WORKDIR /geteva
+
+# 双保险
+COPY ./requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+
+# 拷贝代码。下个版本更新一下这个部分
+COPY . .
+
+# 统一main.py作为入口
+ENTRYPOINT ["python3", "main.py"]
+CMD ["-p", "/mnt/tasks/geoEva"]

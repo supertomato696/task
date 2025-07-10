@@ -1,0 +1,305 @@
+intersection:
+  lane_lines: # 告诉工具如何识别要素文件
+    prefix: lane_boundary 
+    type: line
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: COLOR
+        type: int
+        range: [1, 2, 3, 4, 5, 6, 7, 99]
+      - name: SHAPE_TYPE
+        type: int
+        range: [1, 2, 3, 4, 5, 6, 7, 99]
+      - name: LANE_ID
+        type: string
+      - name: PRE_ID
+        type: string
+      - name: NEXT_ID
+        type: string
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  road_boundaries:
+    prefix: road_boundary
+    type: line
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: COLOR
+        type: int
+        range: [1, 2, 3, 4, 5, 6, 7, 99]
+      - name: TYPE
+        type: int
+        range: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 99]
+      - name: IS_SAFETY
+        type: int
+        range: [1, 2]
+      - name: ROAD_ID
+        type: string
+      - name: PRE_ID
+        type: string
+      - name: NEXT_ID
+        type: string
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  crosswalks:
+    prefix: cross_walk
+    type: polygon
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: LANE_ID
+        type: string
+      - name: JUNC_ID
+        type: string
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  stop_lines:
+    prefix: stop_line
+    type: line
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: TYPE
+        type: int
+        range: [1, 2, 3, 4, 99]
+      - name: COLOR
+        type: int
+        range: [1, 2, 3, 99]
+      - name: SHAPE_TYPE
+        type: int
+        range: [1, 2, 3, 4, 5, 6, 99]
+      - name: LANE_ID
+        type: string
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  arrows:
+    prefix: arrow
+    type: polygon
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: TYPE
+        type: int
+        range: [1, 2, 3, 4, 99]
+      - name: COLOR
+        type: int
+        range: [1, 2, 3, 99]
+      - name: SHAPE_TYPE
+        type: int
+        range: [1, 2, 3, 4, 5, 6, 99]
+      - name: LANE_ID
+        type: string
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  traffic_lights:
+    prefix: traffic_light
+    type: point
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: TYPE
+        type: int
+      - name: LANE_ID
+        type: string
+      - name: C_WALK_ID
+        type: string
+      - name: JUNC_ID
+        type: string
+      - name: HEADING
+        type: double
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  lanes:
+    prefix: lane
+    type: polygon
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: LANE_TYPE
+        type: int
+      - name: TURN_TYPE
+        type: string
+      - name: ROAD_ID
+        type: string
+      - name: LEFT_LN
+        type: string
+      - name: RIGHT_LN
+        type: string
+      - name: LEFT_R_LN
+        type: string
+      - name: RIGHT_R_LN
+        type: string
+      - name: LEFT_BID
+        type: string
+      - name: RIGHT_BID
+        type: string
+      - name: INTER_ID
+        type: string
+      - name: PRE_ID
+        type: string
+      - name: NEXT_ID
+        type: string
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  roads:
+    prefix: road
+    type: polygon
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: KIND
+        type: int
+        nullable: True
+        range: [0, 1, 2, 3, 4, 5, 6, 99]
+      - name: IS_BIDIR
+        type: int
+        nullable: True
+        range: [1, 2]
+      - name: SCEN_TYPE
+        type: int
+        nullable: True
+        range: [0, 1, 2, 3, 4, 5, 99]
+      - name: TYPE
+        type: int
+        nullable: True
+        range: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 99]
+      - name: SPEED
+        type: int
+        nullable: True
+      - name: LANE_ID
+        type: string
+        nullable: True
+      - name: LEFT_BID
+        type: string
+        nullable: True
+      - name: RIGHT_BID
+        type: string
+        nullable: True
+      - name: IN_ID
+        type: string
+        nullable: True
+      - name: CROSS_ID
+        type: string
+        nullable: True
+      - name: OUT_ID
+        type: string
+        nullable: True
+      - name: PRE_ID
+        type: string
+      - name: NEXT_ID
+        type: string
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  intersection_area:
+    prefix: junction
+    type: polygon
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: TYPE
+        type: int
+      - name: IS_EFFECT
+        type: int
+      - name: LANE_ID
+        type: string
+      - name: IN_ROAD
+        type: string
+      - name: OUT_ROAD
+        type: string
+      - name: IN_LANE
+        type: string
+      - name: OUT_LANE
+        type: string
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+  lane_centerlines:
+    prefix: lane_center
+    type: line
+    columns:
+      - name: ID
+        type: string
+        nullable: False
+      - name: ALG_ID
+        type: int
+        nullable: False
+      - name: VERSION
+        type: string
+        nullable: False
+      - name: GEOM
+        type: geometry
+        nullable: False
+
+  

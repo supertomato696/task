@@ -1,0 +1,26 @@
+intersection:
+  lane_lines: # 告诉工具如何识别要素文件
+    prefix: lane_boundary   # 车道线的文件名，一次评测两种车道线，解析配置文件用正则匹配，lane_boundary_vectorize
+    suffix: shp   # 车道线的文件后缀,默认是shp
+  road_boundaries:
+    prefix: road_boundary # road_boundary_vectorize
+  crosswalks: # 输入团队的人行横道配置
+    prefix: cross_walk   # 人行横道的文件名，后缀默认shp，没有筛选条件，所以下面两个字段都木有
+  stop_lines:
+    prefix: stop_line
+  arrows:
+    prefix: arrow
+  lane_centerlines:
+    prefix: lane_center
+  traffic_lights:
+    prefix: traffic_light
+  lanes:
+    prefix: lane
+  roads:
+    prefix: road
+  intersection_area:
+    prefix: junction
+  lane_boundary_vectorize:   # 特别加上的
+    prefix: lane_boundary_vectorize
+  road_boundary_vectorize:    # 特别加上的
+    prefix: road_boundary_vectorize
