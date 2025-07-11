@@ -1,0 +1,16 @@
+.git
+log/*
+**/*.log
+data/
+data/input/*
+data/output/*
+bin/*
+tests/*
+*.vscode
+**/*.tar
+**/__pycache__*
+**/*.pyc
+venv/*
+.venv/*
+*.pickle
+*.spec

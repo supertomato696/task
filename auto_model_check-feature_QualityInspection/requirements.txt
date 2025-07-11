@@ -1,0 +1,17 @@
+loguru==0.7.2
+numpy==2.0.1
+pyproj==3.6.1
+geopandas == 1.0.1
+shapely==2.0.4
+pydantic==2.8.2
+pandas~=2.2.3
+SQLAlchemy~=2.0.36
+GeoAlchemy2==0.15.1
+
+geojson~=3.1.0
+PyYAML~=6.0.2
+matplotlib~=3.9.0
+
+fiona==1.10.1
+
+pandera~=0.24.0
