@@ -1,0 +1,26 @@
+syntax = "proto2";
+
+package RoadPB;
+
+message FeatureID {
+    optional int32  tileid = 1;
+    enum FeatType {
+        UNKNOWN = 0;
+        LINK = 1;
+        NODE = 2;
+        LANE = 3;
+        LANE_BOUNDARY = 4;
+        LANE_GROUP = 5;
+        JUNCTION = 6;
+        TRAFFIC_INFO = 7;
+        POSITION_OBJ = 8;
+        ROAD_BOUNDARY = 9;
+        CONFIDENCE = 10;
+        ODD = 11;
+    }
+    optional int32 type = 2;
+    optional int64 id    = 3;
+    optional int64 version = 4;
+    optional bool is_deleted = 5;
+}
+

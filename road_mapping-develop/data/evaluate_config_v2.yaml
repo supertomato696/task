@@ -1,0 +1,117 @@
+config:
+  params:
+    resample_segment_length_meter: 1
+    line_buffer_length_meter: 0.5  # 车道线、道路边界评估的缓冲区，单位米
+    polygon_match_distance_meter: 10
+    land_marking_match_distance_meter: 1.5
+    traffic_light_match_distance_meter: 2
+    stopline_match_distance_meter: 1
+
+  truth_file_profile:  # V2真值的文件描述
+    lane_line:   # 输入真值的车道线配置
+      prefix: boundary   # 车道线的文件名
+      suffix: shp   # 车道线的文件后缀,默认是shp
+      filter_conditions:   # 如果有要对这份文件中的内容进行筛选，那么需要填写filter_conditions配置。无则不写
+        "type":
+          "value": [1,2,3,4,5,6,10,14,15,17,18,19,21,23]
+          "operator": "in"
+    road_boundary:
+      prefix: boundary
+      suffix: shp
+      filter_conditions:
+        "type":
+          "value": [7,8,11,13,24,25]
+          "operator": "in"
+    crosswalk:
+      prefix: lane_marking
+      filter_conditions:
+        "type":
+          "value": 3
+          "operator": "eq"
+    stop_line:
+      prefix: stopline
+    lane_marking:
+      prefix: lane_marking
+      filter_conditions:
+        "type":
+          "value": 1
+          "operator": "eq"
+    lane_centerline:
+      prefix: centerline
+    trafficlight:
+      prefix: trafficlight
+    intersection:
+      prefix: insection
+
+  file_paths:
+    data_path: ./data
+    truth_data_path: truth
+    input_data_path: input
+    output_data_path: output
+    algorithm_box_data_path: algorithm_boxes
+
+evaluation_actions: [
+    lane_line_eval,  # 车道线评测
+    vectorize_only_lane_line_eval,
+    road_boundary_eval,
+    vectorize_only_road_boundary_eval,
+    crosswalk_eval,
+    arrow_eval,
+    stopline_eval,
+    traffic_light_eval
+    # relative_width_eval, # 车道相对宽度评测，比较耗时
+    # lane_line_offset_statistic, # 车道线偏移评测
+  ]
+
+
+versions:
+  - version: v3.06.05  # 版本名称
+    nickname: bev_byd
+    lane_line: # 告诉工具如何识别要素文件
+      prefix: lane_boundary   # 车道线的文件名，一次评测两种车道线，解析配置文件用正则匹配，lane_boundary_vectorize
+      suffix: shp   # 车道线的文件后缀,默认是shp
+    road_boundary:
+      prefix: road_boundary # road_boundary_vectorize
+    crosswalk: # 输入团队的人行横道配置
+      prefix: cross_walk   # 人行横道的文件名，后缀默认shp，没有筛选条件，所以下面两个字段都木有
+    stop_line:
+      prefix: stop_line
+    lane_marking:
+      prefix: arrow
+    lane_center:
+      prefix: lane_center
+    trafficlight:
+      prefix: traffic_light
+    lane_boundary_vectorize:   # 特别加上的
+      prefix: lane_boundary_vectorize
+    road_boundary_vectorize:    # 特别加上的
+      prefix: road_boundary_vectorize
+
+  - version: v3.06.05  # 版本名称
+    nickname: lidar_byd
+    lane_line: # 告诉工具如何识别要素文件
+      prefix: lane_boundary   # 车道线的文件名，一次评测两种车道线，解析配置文件用正则匹配，lane_boundary_vectorize
+      suffix: shp   # 车道线的文件后缀,默认是shp
+    road_boundary:
+      prefix: road_boundary # road_boundary_vectorize
+    crosswalk: # 输入团队的人行横道配置
+      prefix: cross_walk   # 人行横道的文件名，后缀默认shp，没有筛选条件，所以下面两个字段都木有
+    stop_line:
+      prefix: stop_line
+    lane_marking:
+      prefix: arrow
+    lane_center:
+      prefix: lane_center
+    trafficlight:
+      prefix: traffic_light
+    lane_boundary_vectorize:   # 特别加上的
+      prefix: lane_boundary_vectorize
+    road_boundary_vectorize:    # 特别加上的
+      prefix: road_boundary_vectorize
+
+tasks:
+   - name: 503565
+   - name: 503576
+   - name: 503601
+   - name: 504341
+   - name: 505096

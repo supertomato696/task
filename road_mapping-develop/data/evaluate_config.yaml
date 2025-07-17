@@ -1,0 +1,126 @@
+config:
+  is_visualize: False  #是否可视化
+  is_save_svg: True   #是否保存SVG文件
+  is_check_laneline_topo: True
+
+  params:
+    line_buffer_length_cm: 50  # 车道线、道路边界评估的缓冲区，单位厘米
+    polygon_match_distance: 10
+    landmarking_match_distance: 2
+    light_match_distance: 2
+
+  truth_file_profile:  # 真值文件
+    lane_line:   # 输入真值的车道线配置
+      prefix: laneline   # 车道线的文件名
+      suffix: shp   # 车道线的文件后缀,默认是shp
+      filter_conditions:   # 如果有要对这份文件中的内容进行筛选，那么需要填写filter_conditions配置。无则不写
+        "line_type":
+          "value": 1
+          "operator": "neq"
+    road_boundary:
+      prefix: boundary
+      suffix: shp
+    crosswalk:
+      prefix: crosswalk
+    stop_line:
+      prefix: stopline
+    lane_marking:
+      prefix: lane_marking
+    lane_center:
+      prefix: lane
+    trafficlight:
+      prefix: trafficlight
+
+  file_paths:
+    data_path: ./data
+    truth_data_path: truth
+    input_data_path: input
+    output_data_path: output
+
+versions:
+  - version: v3.01.00  # 团队名称，生成报告的时候用
+    nickname: mmt_rc
+    lane_line: # 输入团队的车道线配置
+      prefix: lane_boundary   # 车道线的文件名，一次评测两种车道线，解析配置文件用正则匹配，lane_boundary_vectorize
+      suffix: shp   # 车道线的文件后缀,默认是shp
+    road_boundary:
+      prefix: road_boundary # road_boundary_vectorize
+    crosswalk: # 输入团队的人行横道配置
+      prefix: cross_walk   # 人行横道的文件名，后缀默认shp，没有筛选条件，所以下面两个字段都木有
+    stop_line:
+      prefix: stop_line
+    lane_marking:
+      prefix: arrow
+    lane_center:
+      prefix: lane_center
+    trafficlight:
+      prefix: traffic_light
+
+  - version: v3.01.00  # 团队名称，生成报告的时候用
+    nickname: byd
+    lane_line: # 输入团队的车道线配置
+      prefix: lane_boundary   # 车道线的文件名，一次评测两种车道线，解析配置文件用正则匹配，lane_boundary_vectorize
+      suffix: shp   # 车道线的文件后缀,默认是shp
+    road_boundary:
+      prefix: road_boundary # road_boundary_vectorize
+    crosswalk: # 输入团队的人行横道配置
+      prefix: cross_walk   # 人行横道的文件名，后缀默认shp，没有筛选条件，所以下面两个字段都木有
+    stop_line:
+      prefix: stop_line
+    lane_marking:
+      prefix: arrow
+    lane_center:
+      prefix: lane_center
+    trafficlight:
+      prefix: traffic_light
+
+
+tasks:
+   - name: 【氦】batch-10010  # 文件夹名称，真值和输入值要对应上，根据这个名称来匹配需要评测的文件。
+     evaluate_laneline: True  # 要素评测开关，True就是评，False就是跳过不评
+     evaluate_boundary: True
+     evaluate_crosswalks: True
+     evaluate_stoplines: True
+     evaluate_landmarks: True
+     evaluate_centerline: False
+     evaluate_trafficlight: True
+   - name: 【锂】batch-10017
+     evaluate_laneline: True
+     evaluate_boundary: True
+     evaluate_crosswalks: True
+     evaluate_stoplines: True
+     evaluate_landmarks: True
+     evaluate_centerline: False
+     evaluate_trafficlight: True
+   - name: 【铍】batch-286
+     evaluate_laneline: True
+     evaluate_boundary: True
+     evaluate_crosswalks: True
+     evaluate_stoplines: True
+     evaluate_landmarks: True
+     evaluate_centerline: False
+     evaluate_trafficlight: True
+   - name: 【硼】batch-195
+     evaluate_laneline: True
+     evaluate_boundary: True
+     evaluate_crosswalks: True
+     evaluate_stoplines: True
+     evaluate_landmarks: True
+     evaluate_centerline: False
+     evaluate_trafficlight: True
+   - name: 【氖】batch-10013
+     evaluate_laneline: True
+     evaluate_boundary: True
+     evaluate_crosswalks: True
+     evaluate_stoplines: True
+     evaluate_landmarks: True
+     evaluate_centerline: False
+     evaluate_trafficlight: True
+   - name: 【氧】batch-312
+     evaluate_laneline: True
+     evaluate_boundary: True
+     evaluate_crosswalks: True
+     evaluate_stoplines: True
+     evaluate_landmarks: True
+     evaluate_centerline: False
+     evaluate_trafficlight: True

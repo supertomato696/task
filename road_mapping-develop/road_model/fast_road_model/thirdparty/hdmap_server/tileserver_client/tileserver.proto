@@ -1,0 +1,126 @@
+syntax = "proto2";
+
+package services;
+
+option cc_generic_services = true;
+
+message TileServiceResponse {
+  optional string message = 1;
+  optional int32 code = 2;
+};
+
+enum TileResourceType {
+    TRT_POS_PCD = 1;
+    TRT_IMAGE = 2;
+    TRT_LANE_LINE = 3;
+    TRT_TRAFFIC_ELEM = 4;
+};
+
+enum TileDataStatus {
+  TDS_NONE = 1;
+  TDS_PENDING = 2;
+  TDS_PROCESSING = 3;
+  TDS_READY = 4;
+  TDS_FAILED = 5;
+};
+
+message TileResourceID {
+  optional int32 tile_id = 1;
+  optional int32 tile_level = 2 [default = 15];
+  optional int32 type = 3;
+  optional uint64 index = 4;
+  optional int64 trail_id = 5;
+  optional int64 version = 6;
+  optional bool is_deleted = 7;
+};
+
+message TileDataSlot {
+  optional string name = 1;
+  optional bytes data = 2;
+  optional uint32 size = 3;
+  optional int64 version = 4;
+};
+
+message TileResource {
+  optional TileResourceID id = 1;
+  optional double timestamp = 3;
+  optional TileDataStatus status = 6;
+  optional bytes data = 7;
+  repeated TileDataSlot slots = 8;
+};
+
+message ResourceUploadRequest {
+  optional string branch = 1;
+  repeated TileResource res = 2;
+};
+
+message ResourceUploadResponse {
+  optional TileServiceResponse ret = 1;
+  repeated TileResourceID id = 2;
+  optional int64 version = 3;
+};
+
+message ResourceQueryRequest {
+  optional int32 tile_id = 1;
+  optional int32 tile_level = 2 [default = 15];
+  repeated int32 type = 3;
+  optional uint64 index = 4;
+  optional int64 trail_id = 5;
+  optional int64 version = 6;
+  optional string branch = 11;
+  optional string slots = 13;
+};
+
+message ResourceQueryResponse {
+  optional TileServiceResponse ret = 1;
+  repeated TileResource res = 2;
+};
+
+message ResourceDownloadRequest {
+  repeated TileResource res = 1;
+  optional string branch = 11;
+};
+
+message ResourceDownloadResponse {
+  optional TileServiceResponse ret = 1;
+  repeated TileResource res = 3;
+};
+
+message ResourceMergeRequest {
+  optional int32 tile_id = 1;
+  optional int32 tile_level = 2 [default = 15];
+  repeated int32 type = 3;
+  optional uint64 index = 4;
+  optional int64 trail_id = 5;
+  optional int64 version = 6;
+  optional string src_branch = 11;
+  optional string dst_branch = 12;
+};
+
+message ResourceMergeResponse {
+  optional TileServiceResponse ret = 1;
+  repeated TileResource res = 2;
+};
+
+message ResourceRevertRequest {
+  optional int32 tile_id = 1;
+  optional int32 tile_level = 2 [default = 15];
+  repeated int32 type = 3;
+  optional uint64 index = 4;
+  optional int64 trail_id = 5;
+  optional int64 version = 6;
+  optional string branch = 11;
+};
+
+message ResourceRevertResponse {
+  optional TileServiceResponse ret = 1;
+};
+
+service TileService {
+  rpc UploadResource(ResourceUploadRequest) returns (ResourceUploadResponse);
+  rpc QueryResource(ResourceQueryRequest) returns (ResourceQueryResponse);
+  rpc DownloadData(ResourceDownloadRequest) returns (ResourceDownloadResponse);
+  rpc MergeResource(ResourceMergeRequest) returns (ResourceMergeResponse);
+  rpc RevertResource(ResourceRevertRequest) returns (ResourceRevertResponse);
+};
+

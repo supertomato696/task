@@ -1,0 +1,15 @@
+syntax = "proto2";
+package RoadPB;
+
+import "metadata/metadata.proto";
+
+message DataQuality {
+    optional FeatureID id = 1;
+    optional int32 data_source  = 2; //数据来源
+    optional int32 data_weather = 3; //数据采集的天气状况
+    optional int32 sensor_type  = 4; //传感器类型
+    optional int32 work_manner  = 5; //作业方式
+    optional int64 create_time  = 6; //创建时间
+    optional int32 confidence   = 7; //置信度得分
+    optional FeatureID feat_id = 8;
+}

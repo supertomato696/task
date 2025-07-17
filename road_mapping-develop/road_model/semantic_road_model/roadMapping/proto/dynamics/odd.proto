@@ -1,0 +1,40 @@
+syntax = "proto2";
+
+package RoadPB;
+import "metadata/metadata.proto";
+import "common/common.proto";
+
+message Dynamic {
+    message Relation {
+        optional FeatureID id = 1; //被关联元素的id，类型不规定
+        optional Point stp = 2; //被关联元素作用范围的起始点，wgs坐标
+        optional Point edp = 3; //被关联元素作用范围的终止点，wgs坐标
+    }
+
+    optional FeatureID id = 1;
+    optional bool is_odd = 2; //此元素表达的范围是否自动驾驶ODD区域，默认为true
+    optional Circle range = 3; //作用范围为单个点/圆形区域时使用，仅支持圆心+半径
+    optional Polyline lines = 4; //作用范围为多段直线时使用，替换drive_line时也用来表达替换后的几何
+    optional Polygon area = 5; //作用范围为封闭曲线时使用
+    optional Relation relation = 6; //直接关联到地图元素的某个区域上
+    optional float heading = 10; //限定元素作业范围朝向，用于range表达范围时区分上下行道路
+
+    enum DYNAMIC_TYPE {
+        STATIC_NOT_ODD = 1; //非ODD动态信息
+        //STATIC_ODD = 2;
+        PATCH_HIGH_SPEED_LIMIT = 3; //替换车道最高限速的动态信息
+        PATCH_LOW_SPEED_LIMIT = 4; //替换车道最低限速的动态信息
+        PATCH_LANE_LINE_TYPE = 5; //替换车道线线型的动态信息
+        PATCH_DRIVE_LINE = 6; //替换行驶引导线几何的动态信息
+    }
+    optional int32 type = 7; //DYNAMIC_TYPE
+    
+    optional int64 reason = 8; //非ODD原因，仅用于非ODD对象
+    optional int32 action = 9; //非ODD后果，仅用于非ODD对象
+
+    optional int64 int_val = 11; //用于patch相关要素的整数型属性的值
+    optional double double_val = 12; //用于patch相关要素的浮点型属性的值
+    optional bytes binary_val = 13; //用于patch相关要素的非特定类型数据
+
+    repeated string tags = 14; //非ODD的tag标记信息，用于存储错误类型、车型、配置等附加信息
+}

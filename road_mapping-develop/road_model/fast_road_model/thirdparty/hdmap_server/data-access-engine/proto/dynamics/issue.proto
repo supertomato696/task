@@ -1,0 +1,87 @@
+syntax = "proto2";
+
+package RoadPB;
+import "metadata/metadata.proto";
+import "common/common.proto";
+
+enum IssueType {
+    ISSUE_LANE_LINE_UNCONNECTED = 1;
+    ISSUE_LANE_LINE_GEOMETRY_ERROR = 2;
+    ISSUE_LANE_ATTRIBUTE_ERROR = 3;
+    ISSUE_CURB_BARRIER_CONNECTED_ERROR = 4;
+    ISSUE_OBJECT_LOCATION_ERROR = 5;
+    ISSUE_OBJECT_ATTRIBUTE_ERROR = 6;
+    ISSUE_INFORMATION_LOG = 7;
+    ISSUE_TASK_OVERFLOW = 8;
+    ISSUE_AREA_ERROR = 9;
+    ISSUE_DADIAN_POINT = 10;
+	ISSUE_PCD_ERROR = 11;
+	ISSUE_EDGE_MARK = 12;
+	ISSUE_DIFF_LINE = 13;
+};
+
+enum StateType{
+    STATE_DONE = 1;//完成修正
+    STATE_REDUNDANCY = 2;//永久冗余
+    STATE_NONE = 3;//无
+    STATE_STAGE_REDUNDANCY = 4;//当前冗余
+    STATE_PENDING = 5;//待修正(质检),待确认
+    STATE_SUSPEND = 6;//挂起
+	STATE_CLEARING = 7;//数据待清洗
+};
+
+enum GeometryType{
+    GEO_POINT = 1;
+    GEO_LINE = 2;
+    GEO_POLYGON = 3;
+};
+
+enum DiffState {
+    NON = 1; //空
+    QC_IN = 2;  //在差分结果里面
+    QC_OUT = 3; //不在差分结果里面
+};
+
+message ErrorPoint{
+    required Point position = 1;
+    required double min_distance = 2;
+    required double min_angle = 3;
+};
+
+enum ElementChangeType
+{
+    ELEMENT_CHANGE_ADD    = 1;
+    ELEMENT_CHANGE_DELETE = 2;
+    ELEMENT_CHANGE_MODIFY = 3;
+};
+
+message Issue {
+    optional FeatureID id = 1;
+    optional string desc = 2;
+    optional Point pt = 3;
+    optional int32 type = 6; //IssueType
+    optional bool manual = 7;
+    repeated ErrorPoint error_points = 8;
+    optional int32 state = 9; //StateType
+    optional int64 timestamp = 10;
+    optional int32 geotype = 11; //GeometryType
+    optional double angle = 12;
+    optional string memo = 13;
+    optional int64 rule_id = 14;
+    optional int32 mark_red_phase2 = 17;
+    optional int64 mark_red_qcid = 18;
+    optional string mark_red_editor = 19;
+    optional string mark_red_timestamp = 20;            //标记时的时间戳
+    optional int32 can_edit_tile = 21;                  //有编辑权限的11级TileID（占比最大的tile）
+    optional int32 zy_state = 22; //StateType           //作业的状态
+    optional int32 diff_state = 23 [default = 0]; //DiffState //差分结果状态
+    optional FeatureID ref_id = 24;//for diff in next
+    optional FeatureID tar_id = 25;
+    optional int32 change_type = 26; //ElementChangeType
+    optional string match_strategy = 27;
+    optional string field_name = 28;
+    repeated FeatureID diff_ids = 29;
+    optional FeatureID relate_id = 30;                  //关联对象id
+	optional int32 diff_phase = 31 [default = 0]; //0: 作业差分; 1: 预处理差分 差分的阶段
+    optional double len = 32 [default = 0];
+};

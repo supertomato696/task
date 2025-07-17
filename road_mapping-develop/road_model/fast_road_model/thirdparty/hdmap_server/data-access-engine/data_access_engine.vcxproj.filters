@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="manager\road_geometry_mgr.cpp">
+      <Filter>manager</Filter>
+    </ClCompile>
+    <ClCompile Include="dao\road_tile_dao.cpp">
+      <Filter>dao</Filter>
+    </ClCompile>
+    <ClCompile Include="dao\config_address.cpp">
+      <Filter>public</Filter>
+    </ClCompile>
+    <ClCompile Include="data_access_engine.cpp">
+      <Filter>public</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\common\common.pb.cc">
+      <Filter>proto\common</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\confidence\confidence.pb.cc">
+      <Filter>proto\confidence</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\dynamics\odd.pb.cc">
+      <Filter>proto\dynamics</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\lane\lane.pb.cc">
+      <Filter>proto\lane</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\link\link.pb.cc">
+      <Filter>proto\link</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\metadata\metadata.pb.cc">
+      <Filter>proto\metadata</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\traffic\traffic.pb.cc">
+      <Filter>proto\traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\services\roadserver.pb.cc">
+      <Filter>proto\services</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\services\tileserver.pb.cc">
+      <Filter>proto\services</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\position\position.pb.cc">
+      <Filter>proto\position</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\cpp_code\dynamics\issue.pb.cc">
+      <Filter>proto\dynamics</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\common_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\confidence_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\dynamics_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\feature_id_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\feature_proxy_base.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\feature_with_id_proxy_base.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\lane_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\link_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\meta_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\position_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\tile_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy\traffic_proxy.cpp">
+      <Filter>proxy</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="public\proj_helper.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="manager\road_geometry_mgr.h">
+      <Filter>manager</Filter>
+    </ClInclude>
+    <ClInclude Include="dao\road_tile_dao.h">
+      <Filter>dao</Filter>
+    </ClInclude>
+    <ClInclude Include="dao\config_address.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="data_access_engine.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\vector3.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\vector3.hpp">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\optional.hpp">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\sha1.hpp">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\platform.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\common\common.pb.h">
+      <Filter>proto\common</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\confidence\confidence.pb.h">
+      <Filter>proto\confidence</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\dynamics\odd.pb.h">
+      <Filter>proto\dynamics</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\lane\lane.pb.h">
+      <Filter>proto\lane</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\link\link.pb.h">
+      <Filter>proto\link</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\metadata\metadata.pb.h">
+      <Filter>proto\metadata</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\traffic\traffic.pb.h">
+      <Filter>proto\traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\services\roadserver.pb.h">
+      <Filter>proto\services</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\services\tileserver.pb.h">
+      <Filter>proto\services</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\position\position.pb.h">
+      <Filter>proto\position</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\cpp_code\dynamics\issue.pb.h">
+      <Filter>proto\dynamics</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\common_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\confidence_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\dynamics_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\feature_id_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\feature_merger.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\feature_proxy_base.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\feature_with_id_proxy_base.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\lane_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\link_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\meta_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\position_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\tile_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy\traffic_proxy.h">
+      <Filter>proxy</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="proto\common\common.proto">
+      <Filter>proto\common</Filter>
+    </None>
+    <None Include="proto\confidence\confidence.proto">
+      <Filter>proto\confidence</Filter>
+    </None>
+    <None Include="proto\dynamics\odd.proto">
+      <Filter>proto\dynamics</Filter>
+    </None>
+    <None Include="proto\lane\lane.proto">
+      <Filter>proto\lane</Filter>
+    </None>
+    <None Include="proto\link\link.proto">
+      <Filter>proto\link</Filter>
+    </None>
+    <None Include="proto\metadata\metadata.proto">
+      <Filter>proto\metadata</Filter>
+    </None>
+    <None Include="proto\traffic\traffic.proto">
+      <Filter>proto\traffic</Filter>
+    </None>
+    <None Include="proto\services\roadserver.proto">
+      <Filter>proto\services</Filter>
+    </None>
+    <None Include="proto\services\tileserver.proto">
+      <Filter>proto\services</Filter>
+    </None>
+    <None Include="proto\position\position.proto">
+      <Filter>proto\position</Filter>
+    </None>
+    <None Include="proto\dynamics\issue.proto">
+      <Filter>proto\dynamics</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="proxy">
+      <UniqueIdentifier>{81659d4a-f507-4a4e-a692-e9596b85494f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto">
+      <UniqueIdentifier>{226cc4db-3c06-4727-9089-3a50fa953deb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="manager">
+      <UniqueIdentifier>{b77c53f2-d496-4174-817b-94b1636ee42d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="public">
+      <UniqueIdentifier>{0fc3d5d2-dc8f-4315-ab1c-5ebf5378f3b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dao">
+      <UniqueIdentifier>{6dedce5f-3aed-4197-b7dc-d92c45c12347}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\common">
+      <UniqueIdentifier>{0c3b3d00-942d-410d-803d-b46ed10c4cfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\confidence">
+      <UniqueIdentifier>{8bef852e-160f-4454-a9bb-2dc493622093}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\dynamics">
+      <UniqueIdentifier>{a45fdbc9-b320-45c0-950d-8d33d9bc195f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\lane">
+      <UniqueIdentifier>{e892147d-8b3e-4086-80c0-6092fe90b110}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\link">
+      <UniqueIdentifier>{a88a1e0c-ff16-47b2-8d8e-fe903d1b0287}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\metadata">
+      <UniqueIdentifier>{496336f7-a650-4201-862d-b66749d2e69b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\position">
+      <UniqueIdentifier>{fa2cbf26-17d0-427d-9057-019df2cd73a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\services">
+      <UniqueIdentifier>{c62dcc91-268c-4928-91f2-3256c579770f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proto\traffic">
+      <UniqueIdentifier>{1c5961bd-a708-47ed-b9f0-6041bf6924d9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,23 @@
+﻿namespace HadmapFBS;
+
+struct Box {
+  x:float;
+  y:float;
+  z:float;
+  w:float;
+  l:float;
+  h:float;
+}
+
+table Object {
+  type:string;
+  label:short;
+  box:Box;
+}
+
+table Objects {
+  content:[Object];
+}
+
+root_type Objects;
+

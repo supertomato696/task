@@ -1,0 +1,23 @@
+# FROM roadmodel:v3
+FROM 10.0.117.68/byd_roadmodel_test/roadmodel:v5
+
+WORKDIR /app/midwork
+
+COPY output .
+# COPY task_info_demo.json task_info_demo.json
+# COPY CHANGELOG.md CHANGELOG.md
+
+# RUN apt-get install -y zip
+
+# apt-get update
+# apt-get install -y docker.io
+
+RUN echo -e "\n/app/midwork/road_model/bev_road_model/thirdparty/proj4\n" >> /etc/ld.so.conf.d/midwork.conf
+RUN echo -e "\n/app/midwork/road_model/bev_road_model/thirdparty/lib\n" >> /etc/ld.so.conf.d/midwork.conf
+RUN echo -e "\n/app/midwork/mapping/pointcloudconvert/wgs84_to_mars/lib/x86\n" >> /etc/ld.so.conf.d/midwork.conf
+
+# entrypoint
+RUN ldconfig
+
+COPY docker/entrypoint.sh docker/entrypoint.sh
+ENTRYPOINT ["sh", "docker/entrypoint.sh"]

@@ -1,0 +1,168 @@
+syntax = "proto2";
+
+package RoadPB;
+
+enum ProvinceCode { 
+    BEI_JING = 0;
+    SHANG_HAI = 1;
+    GUANG_ZHOU = 2;
+    SHEN_ZHEN = 3;
+    HE_BEI = 4;
+    SHAN_DONG = 5;
+}
+
+message LangName {
+    optional string name_type = 1;  //1-官方名称 2-编号名称 3-别名
+    optional string lang_code = 2;
+    optional string name      = 3;
+}
+
+message Point {
+    optional double x = 1;
+    optional double y = 2;
+    optional double z = 3;
+}
+
+message Polyline {
+    repeated Point pts = 1;
+    optional float width = 2;
+    optional float height = 3;
+}
+
+message Polygon {
+    repeated Point pts = 1;
+    optional Point normal = 2;
+    optional float edge_width = 3;
+    optional Point orientation = 4;
+}
+
+message Circle {
+    optional Point center = 1;
+    optional Point normal = 2;
+    optional float radius = 3;
+    optional float edge_width = 4;
+}
+
+message Cylinder {
+    repeated Point points = 1;
+    optional float radius = 2;
+}
+
+message BoundingBox {
+    optional Point min_pt = 1;
+    optional Point max_pt = 2;
+}
+
+enum AttributeType {
+    UNKNOWN            = 0;
+    // 以下是道路属性
+    VRU = 1; //弱势群体使用道路频率VRU---not needed
+    OPPO = 2;//来车碰撞可能性OPPO---not needed
+    reserved1 = 3; //MULTIPLY_DIGITIZED = 3; //是否上下线分离
+    VARI_SPEED_LIMIT   = 4; //可变限速标识---not needed
+    OVERHEAD_OBSTRUCT  = 5; //是否有上方障碍物标识---not needed
+    INFRA_SEP_L        = 6;   //左侧隔离设施---not needed
+    INFRA_SEP_R        = 7;   //右侧隔离设施---not needed
+    MEDIAN_LEFT        = 8;   //左侧隔离设施---not needed
+    MEDIAN_WIDTH_L     = 9;   //左侧中央隔离宽度---not needed
+    MEDIAN_RIGHT       = 10;  //右侧隔离设施---not needed
+    MEDIAN_WIDTH_R     = 11;  //右侧中央隔离宽度---not needed
+    MEDIAN_SURFACE_L   = 12;  //左侧中央隔离面材质---not needed
+    MEDIAN_SURFACE_R   = 13;  //右侧中央隔离面材质---not needed
+    reserved2 = 14; //LINK_TYPE = 14;  //道路类型
+    reserved3 = 15; //LINK_KIND = 15;  //道路种别
+    PAVEMENT           = 16;  //铺设状态---not needed
+    // 以下是车道属性
+    LANE_TYPE         = 17;  //车道类型
+    LANE_KIND         = 18;  //车道种别
+    LANE_WIDTH        = 19;  //车道宽度
+    LANE_HEIGHT_LIMIT = 20;  //车道限高值
+    LANE_WEIGHT_LIMIT = 21;  //车道限重值
+    LANE_WIDTH_LIMIT  = 22;  //车道限宽值
+    //以下是车道边线(LaneBoundary)属性
+    reserved4 = 23; //THROUGH_FLAG = 23; //是否可穿越 ---暂时去掉，此属性可以根据线形类型进行判断
+    reserved5 = 24; //LANE_BOUND_TYPE = 24; //车道边线类型 ---暂时去掉，因为模型修改后LaneBoundary只描述印刷边线，其他类型拆分到RoadBoundary模型中
+    LANE_BOUND_KIND     = 25;  //车道边线种别
+    LANE_BOUND_COLOR    = 26;  //车道边线颜色
+    LANE_BOUND_MATERIAL = 27;  //车道边线材质
+    //以下是道路边线(RoadBoundary)属性
+    ROAD_BOUND_KIND     = 30;  //道路边线类型
+}
+
+message AttributeValue {
+    // 以下是道路属性
+    optional int32  VRU_VAL               = 1;   //0-未调查(unknown) 1-低(low) 2-中(medium) 3-高(high)
+    optional int32  OPPO_VAL              = 2;   //0-未调查(unknown) 1-低(low) 2-中(medium) 3-高(high)
+    optional int32  MULTI_DIGITIZED_VAL   = 3;   //0-未调查(unknown) 1-否(no) 2-是(yes)
+    optional int32  VARI_SPEED_LIMIT_VAL  = 4;   //0-未调查(unknown) 1-否(no) 2-是(yes)
+    optional int32  OVERHEAD_OBSTRUCT_VAL = 5;   //0-未调查(unknown) 1-否(no) 2-是(yes)
+    optional int32  INFRA_SEP_L_VAL       = 6;   //0-未调查(unknown) 1-无(none) 2-硬隔离设施(hard_isolation_facility) 3-软隔离设施(soft_isolation_facility)
+    optional int32  INFRA_SEP_R_VAL       = 7;   //0-未调查(unknown) 1-无(none) 2-硬隔离设施(hard_isolation_facility) 3-软隔离设施(soft_isolation_facility)
+    optional int32  MEDIAN_LEFT_VAL       = 8;   //0-未调查(unknown) 1-无(none) 2-印刷线(printed_line) 3-硬隔离(Hard_isolation_facility) 4-软隔离(soft_isolation_facility)
+    optional double MEDIAN_WIDTH_L_VAL    = 9;   //单位cm 保留2位小数
+    optional int32  MEDIAN_RIGHT_VAL      = 10;  //0-未调查(unknown) 1-无(none) 2-印刷线(printed_line) 3-硬隔离(Hard_isolation_facility) 4-软隔离(soft_isolation_facility)
+    optional double MEDIAN_WIDTH_R_VAL    = 11;  //单位cm 保留2位小数
+    optional int32  MEDIAN_SURFACE_L_VAL  = 12;  //0-未调查(unknown) 1-未铺设(unpaved) 2-铺设(paved) 3-混合(mixed)
+    optional int32  MEDIAN_SURFACE_R_VAL  = 13;  //0-未调查(unknown) 1-未铺设(unpaved) 2-铺设(paved) 3-混合(mixed)
+    /* 0-未调查 1-无属性 2-IC 3-JCT 4-交叉点内LINK 5-UTURN 6-辅路 7-SA道路 8-PA道路
+       9-全封闭道路 10-环岛 11-主辅路出入口 12-右转专用道 13-左转专用道 14-桥梁 15-隧道 16-高架路
+       17-公交专用道 18-POI连接路 20-高速连接匝道 21-进高速匝道 22-出高速匝道 23-普通道路连接匝道 30-窄道路
+       40-区域内道路 41-地下停车场出入口 42-地上停车场出入口 43-停车场出入口 50-未封闭环形道路 51-开合桥 52-借道左转*/
+    optional int32  LINK_TYPE_VAL         = 14;
+    /* 0-未调查(unknown) 1-高速道路(freeway) 2-城市高速(express_way) 3-国道(national_highway) 4-省道（provincial_trunk_highway） 5-县道(county_road) 7-乡道(township_road) 8-村道(country_road) 9-其它道路(other_road) 10-特服道路(??? 不是很理解) 11-轮渡(ferry) 12-人渡(??不是很理解) 13-步行道路（sidewalk）*/
+    optional int32  LINK_KIND_VAL         = 15;
+    /*0-未调查(unknown) 1-其他(others) 2-水泥(cement) 3-金属(metal) 4-塑料(plastic) 5-混合(mixed) 6-沥青(pitch) 7-橡胶(rubber) 8-坑洼??*/
+    optional int32  PAVEMENT_VAL          = 16;
+    // 以下是车道属性(翻译见lane.proto)
+    /*0-未调查 1-其他类型车道 2-普通车道 3-加速车道 4-减速车道 5-加减速车道 6-HOV车道 7-慢车道 8-快车道
+      9-管制准入车道 10-可通行停车道 11-收费站车道 12-应急车道 13-公交车道 14-自行车道 15-掉头车道 16-潮汐车道
+      17-避险车道 18-可变车道 19-不可通行停车道 20-紧急停车道 21-爬坡车道 22-出租车专用停车道 23-卡车专用停车道 
+      24-摩托车专用停车道 25-借道左转 26-超车道 27-交换区域连接车道*/
+    optional int32 LANE_TYPE_VAL          = 17; 
+    /* (翻译详见lane.proto) 0-未调查 1-机动车道 2-非机动车道 3-机动车非机动车混合车道*/
+    optional int32 LANE_KIND_VAL          = 18;
+    optional double LANE_WIDTH_VAL        = 19;  //单位cm 保留2位小数
+    optional double LANE_HEIGHT_LIMIT_VAL = 20;  //单位m 保留2位小数
+    optional double LANE_WEIGHT_LIMIT_VAL = 21;  //单位T 保留2位小数
+    optional double LANE_WIDTH_LIMIT_VAL  = 22;  //单位m 保留2位小数
+    //以下是车道边线属性(翻译详见lane.proto)
+    //reserved 23;//optional int32 THROUGH_FLAG_VAL = 23; //0-未调查 1-可穿越 2-不可穿越 ---暂时去掉，此属性可以根据线形类型进行判断
+    //0-未调查 1-印刷边线 2-路缘石 3-沟渠 4-路边墙 5-混凝土防撞墙 6-护栏 7-栅栏 8-其他类型防护栏 9-铺设边缘 10-未分类障碍物
+    //reserved 24;//optional int32 LANE_BOUND_TYPE_VAL = 24;---暂时去掉，因为模型修改后LaneBoundary只描述印刷边线，其他类型拆分到RoadBoundary模型中
+    //边线种别:0-未调查 1-其他 2-单实线 3-单虚线 4-特殊类型虚线 5-导流线 6-双实线 7-双虚线 8-左实右虚 9-左虚右实 10-virtual gore 11-纵向减速带 12-可变导向线
+    optional int32 LANE_BOUND_KIND_VAL     = 25;
+    optional int32 LANE_BOUND_COLOR_VAL    = 26;
+    optional int32 LANE_BOUND_MATERIAL_VAL = 27; //0-未调查(unknown) 1-其他材质(others) 2-印刷线(printed_line)
+    //以下是道路边线(RoadBoundary)属性(翻译详见lane.proto)
+    //0-未调查 2-路缘石 3-沟渠 4-路边墙 5-混凝土防撞墙 6-护栏 7-栅栏 8-其他类型防护栏 9-铺设边缘 10-未分类障碍物
+    optional int32 ROAD_BOUND_KIND_VAL     = 30;  //道路边线类型
+}
+
+message RangeAttribute {
+    optional Polyline       geom      = 1;
+    optional AttributeType  type      = 2;
+    optional AttributeValue start_val = 3;
+    optional AttributeValue end_val   = 4;
+    optional double attribute_len = 5;
+}
+
+message FixedSpeedLimit {
+    optional Polyline geom = 1;
+    optional int32  direction    = 2;  //基于矢量化方向 0-未调查（unknown) 1-双方向(bidirection) 2-顺方向（forward） 3-逆方向（backward）
+    optional float  max_speed    = 3;  //单位km/h
+    optional int32  max_source   = 4;  //1-实际限速值(Actual_speed_limit) 2-理论限速值(Theoretical_speed_limit)
+    optional float  min_speed    = 5;  //单位km/h
+    optional int32  min_source   = 6;  //1-实际限速值(Actual_speed_limit) 2-理论限速值(Theoretical_speed_limit)
+    optional string valid_period = 7;  //有效时间
+    optional string vehicle_type = 8;  //车辆类型
+}
+
+message CondSpeedLimit {
+    optional Polyline geom    = 1;
+    optional int32  direction        = 2;  //0-未调查（unknown) 1-顺方向（forward） 2-逆方向（backward） 3-双方向(bidirection)
+    optional int32  cond_type        = 3;  //1-school|2-weather_fog|3-weather(rain/snow)|4-weather_icy|5-other-adverse-weather|6-speed_bump 
+    optional int32  cond_speed_limit = 4;  //单位km/h
+    optional string valid_period     = 5;
+    optional string vehicle_type     = 6;
+    optional double attribute_len    = 7;
+}

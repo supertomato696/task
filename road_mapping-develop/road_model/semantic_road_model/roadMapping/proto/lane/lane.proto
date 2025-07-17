@@ -1,0 +1,458 @@
+syntax = "proto2";
+
+package RoadPB;
+import "metadata/metadata.proto";
+import "common/common.proto";
+
+enum VehicleType {//车种类型
+    UNKNOWN_VEHICLE = 0;//未确认车种
+    CAR = 1;//小汽车
+    MOTORCYCLE = 2;//摩托车
+    BICYCLE = 3;//自行车
+    TRUCK = 4;//卡车
+    TAXI = 5;//出租车
+    BUS = 6;//公交车
+    PEDESTRAIN = 7;//行人
+    CABLE_CAR = 8;//有轨电车
+}
+
+message LaneDirection {  //车道通行方向  
+    enum Direction {
+        FORWARD = 1;//正向通行
+        BACKWARD = 2;//逆向通行
+        BIDIRECTION = 3;//双向通行
+        TIDAL = 4; //潮汐（可变车道）
+        NONE = 5;//未确认
+    }
+    optional int32 direction    = 1; //Direction;
+    optional string valid_period = 2;  //有效时间
+    repeated int32 allowed_vehicle_types = 3;  //车辆类型,VehicleType
+}
+
+// enum BoundaryConfidence { //边界置信度（制作内容不清楚，难以翻译）？
+//     UNKNOWN_CONFIDENCE = 0;// 未确认
+//     NORMAL = 1; // 正常
+//     OBSCURED = 2; // 模糊
+//     NOT_CLEAR = 3; //不清晰 （与obscured的界定是什么？）
+//     //NOT_ALIGNED = 4;
+//     //INTERFERENCE = 5;
+//     //OVERLAP = 6;
+//     //MEAN_WHILE = 7;
+//     OTHER = 99;
+// }
+
+// enum BoundaryRestriction { // 边界限制？ 制作内容不清楚，无法翻译
+//     UNKNOWN_RESTRICTION = 0;
+//     BUS_LANE_LEFT = 1;
+//     BUS_LANE_RIGHT = 2;
+//     BIKE_LANE_LEFT = 3;
+//     BIKE_LANE_RIGHT = 4;
+//     //OPPOSITE_NO_PASS = 5;
+//     //OPPOSITE_CAN_PASS = 6;
+//     PEDESTRAIN_LANE_LEFT = 7;
+//     PEDESTRAIN_LANE_RIGHT = 8;
+//     WHITE_STRIP_LEFT = 9;
+//     WHITE_STRIP_RIGHT = 10;
+//     YELLOW_STRIP_LEFT = 11;
+//     YELLOW_STRIP_RIGHT = 12;
+//     WHITE_STRIP_BOTH = 13;
+//     YELLOW_STRIP_BOTH = 14;
+// }
+
+message LaneBoundary {//车道边界
+    optional FeatureID id = 1;
+    optional Polyline geom = 2;
+    
+    enum Color { // 颜色
+        UNKNOWN_COLOR = 0;//未确认
+        WHITE = 1;//白色
+        YELLOW = 2;//黄色
+        ORANGE = 3;//橙色
+        BLUE = 4;//蓝色
+        GREEN = 5;//绿色
+        GRAY = 6;//灰色
+        LEFT_GRAY_RIGHT_YELLOW = 7;//左灰右黄
+        LEFT_YELLOW_RIGHT_WHITE = 8;//左黄右白
+        LEFT_WHITE_RIGHT_YELLOW = 9;//左白右黄
+    }
+    optional int32 color = 3;    
+    
+    enum LaneLineType_Type {
+        LaneLineType_Type_UNKNOWN = 0;
+        LaneLineType_Type_LANELINE = 1;
+        LaneLineType_Type_CURB = 2;
+        LaneLineType_Type_CENTER = 3;
+        LaneLineType_Type_GUARDRAIL = 4;
+        LaneLineType_Type_CONCRETE_BARRIER = 5;
+        LaneLineType_Type_FENCE = 6;
+        LaneLineType_Type_WALL = 7;
+        LaneLineType_Type_CANOPY = 8;
+    };
+    enum LaneBoundaryType {//车道边界类型
+        UNKNOWN_BOUNDARY = 0;
+        LANELINE = 1;//车道标线
+        GUARDRAIL = 2;//防护栏
+        TRAFFIC_CONE = 10;//锥桶
+        PUNCHEON = 11;//离散型障碍物（包括短柱:可表达石墩\短柱等无法穿越的障碍物）
+    };
+    repeated int32 types = 4; //LaneBoundaryType
+
+    enum LineMarking {
+        LineMarking_Unknown = 0;
+        LineMarking_SolidLine = 1;
+        LineMarking_DashedLine = 2;
+        LineMarking_ShortDashedLine = 3;
+        LineMarking_DoubleSolidLine = 4;
+        LineMarking_DoubleDashedLine = 5;
+        LineMarking_LeftSolidRightDashed = 6;
+        LineMarking_RightSolidLeftDashed = 7;
+        LineMarking_ShadedArea = 8;
+        LineMarking_LaneVirtualMarking = 9;
+        LineMarking_IntersectionVirualMarking = 10;
+        LineMarking_CurbVirtualMarking = 11;
+        LineMarking_UnclosedRoad = 12;
+        LineMarking_RoadVirtualLine = 13;
+        LineMarking_Other = 99;
+    };
+    enum MarkingType { //车道标线线型
+        UNKNOWN = 0; //未确认
+        SOLID = 1; //单实线
+        DASHED = 2;//单虚线
+        SHORT_DASHED = 3;//短粗虚线
+        DOUBLE_SOLID = 4;//双实线
+        DOUBLE_DASHED = 5;//双虚线
+        LEFT_SOLID_RIGHT_DASHED = 6;//左实右虚
+        LEFT_DASHED_RIGHT_SOLID = 7;//左虚右实
+        SHADED_AREA = 8;//表达没有明确边界的场景，如导流区等分割的车道
+        VIRTUAL_LANE = 9;//表达除了路口内，其他场景的虚拟车道标线
+        VIRTUAL_JUNCTION = 10;//表达路口内的虚拟车道标线
+        //VIRTUAL_CURB = 11;
+        //UNCLOSED_ROAD = 12;
+        //VIRTUAL_ROAD = 13;
+        //OTHER = 99;
+    };
+    optional int32 marking = 5; //MarkingType
+
+    // optional int32 confidence = 6;//BoundaryConfidence
+    optional bool ldm = 7; //纵向减速线    
+}
+
+//LaneBoundary只受自身属性而打断，其幅度可能跨越多个Lane
+//需要增加一个LaneBoundaryRange结构挂接在Lane上
+message LaneBoundaryRange {
+    optional FeatureID bound_id = 1;
+    optional Point start_pt = 2;
+    optional Point end_pt = 3;
+}
+
+//RoadBoundary结构用来描述可通行、不可通行区域的边界
+//可以用来表示道路边界、高精路口边界等
+message RoadBoundary { //道路边界
+    enum RoadBoundaryType { // 道路边界类型
+        UNKNOWN_BOUNDARY = 0; //未知类型
+        //LANELINE = 1;
+        CURB = 2;//路缘石
+        //CENTER = 3;
+        GUARDRAIL = 4;//防护栏
+        CONCRETE_BARRIER = 5;//混凝土防护栏（新泽西防护栏）
+        FENCE = 6;//栅栏
+        WALL = 7;//保护墙
+        CANOPY = 8;//遮棚
+        PAVE = 9;//自然边界,铺设未铺设边界
+        DITCH = 10;//沟渠
+        PUNCHEON = 11;//离散型障碍物（包括短柱:可表达石墩\短柱等无法穿越的障碍物）
+    }
+    optional FeatureID id = 1;
+    optional int32 type = 2; //RoadBoundaryType
+    // optional int32 confidence = 3;//BoundaryConfidence
+    // repeated int32 restriction = 4; //BoundaryRestriction
+    optional Polyline geom = 10; 
+}
+
+// enum LaneFunction { //车道功能？：制作内容不清楚，无法翻译
+//     NONE = 0; 
+//     CITY_WAY = 1;
+//     HIGH_WAY = 2;
+//     BIKING = 3;
+//     SIDEWALK = 4;
+//     PARKING = 5;
+//     RAMP = 6;
+//     EMERGENCY = 7;
+//     ACCELERATION = 8;
+// }
+
+// enum LanePriority { // 优先级？：制作内容不清楚，无法翻译
+//     UNKNOWN_PRIORITY = 0;
+//     HIGHER = 1;
+//     EQUAL = 2;
+//     LOWER = 3;
+//     BY_SIGNAL = 4;
+//     BY_STOPLINE = 5;
+// }
+
+message LaneSection {
+    optional LaneBoundaryRange left_boundary  = 1;//车道左侧边线类型
+    optional LaneBoundaryRange right_boundary = 2;//车道右侧边线类型
+    repeated FixedSpeedLimit speed_limits = 3;
+    repeated FeatureID objects  = 5;//挂接车道的定位层对象
+    repeated FeatureID traffics = 6;//挂接车道的交通语义信息
+
+    optional float width        = 7;  //单位m 保留2位小数
+    optional float height_limit = 8;  //单位m 保留2位小数
+    optional float weight_limit = 9;  //单位T 保留2位小数
+    optional float width_limit  = 10;  //单位m 保留2位小数    
+}
+
+//LaneGroup由多个LaneSequence存储
+//Parallel按照Curb到Middle的顺序存储
+message Lane { //车道
+    optional FeatureID id = 1;
+    repeated LaneSection lanes = 2;
+    repeated FeatureID drivelines = 3;
+
+    enum Function {
+        Function_NONE = 0;
+        Function_CITY_DRIVING = 1;
+        Function_HIGH_DRIVING = 2;
+        Function_BIKING = 3;
+        Function_SIDEWALK = 4;
+        Function_PARKING = 5;
+        Function_RAMP = 6;
+        Function_EMERGENCY = 7;
+        Function_ACCELERATION = 8;
+    };
+    optional int32 function = 4; // LaneFunction
+    
+    enum LaneType {//车道类型
+        UNKNOWN_LANETYPE = 0;//0-未调查 
+        //OTHERS = 1;//1-其他类型车道 
+        STANDARD_LANE = 2;//2-普通车道 
+        ACCELERATION_LANE = 3;//3-加速车道 
+        DECELERATION_LANE = 4;//4-减速车道 
+        SPEED_CHANGE_LANE = 5;//5-加减速车道 
+        //HOV_LANE = 6;//6-HOV车道 
+        //LOW_SPEED_LANE = 7;//7-慢车道 
+        //HIGH_SPEED_LANE = 8;//8-快车道
+        //ACCESS_CONTROLLED_LANE = 9;//9-管制准入车道 
+        //PASSABLE_PARKING_LANE = 10;//10-可通行停车道 
+        TOLL_LANE = 11;//11-收费站车道 
+        EMERGENCY_LANE = 12;//12-应急车道 
+        BUS_LANE = 13;//13-公交车道 
+        CYCLE_PATH = 14;//14-自行车道 
+        U_TURN_LANE = 15;//15-掉头车道 
+        //TIDAL_LANE = 16;//16-潮汐车道
+        //ESCAPE_RAMP =17; //17-避险车道
+        //CHANGEABLE_LANE = 18;//18-可变车道 
+        //IMPASSABLE_PARKING_LANE = 19;//19-不可通行停车道 
+        //LAY_BY_LANE = 20;//20-紧急停车道 
+        //CLIMBING_LANE = 21;//21-爬坡车道 
+        //TAXI_ONLY_PARKING_LANE = 22;//22-出租车专用停车道 
+        //TRUCK_ONLY_PARKING_LANE = 23;//23-卡车专用停车道 
+        //MOTOR_ONLY_PARKING_LANE = 24;//24-摩托车专用停车道 
+        //LEFT_TURN_ROAD_BORROWING_LANE = 25; //25-借道左转 
+        //PASSING_LANE = 26;//26-超车道 
+        //27-交换区域连接车道(不是很理解定义，无法找到场景并翻译)
+    }
+    /*  unknown或者无效 ,软件逻辑层的错误	0x0
+        普通车道（Normal） 	0x1
+        应急车道（Emergency） 	0x10
+        公交车道（RestrictedForbidden) 	0x20
+        超车道(RestrictedUsable) 	0x40
+        HOV车道 	0x80
+        加速车道(Express) 	0x100
+        掉头车道(Reversible ) 	0x200
+        减速车道(Slow） 	0x400
+        路肩车道（DrivableShoulder） 	0x800
+        路口车道 	0x2000
+        非机动车道 	0x4000
+        机非混合车道 	0x8000
+        人行道 	0x10000
+        摩托车道 	0x20000
+        ETC车道 	0x40000
+        收费站车道 	0x80000
+        检查站车道 	0x100000
+        匝道 	0x200000
+        隔离带车道 	0x400000
+        导流带车道 	0x800000
+        紧急停车车道 	0x1000000
+        危险品专用车道 	0x2000000
+        爬坡车道 	0x4000000
+        可变导向车道 	0x8000000
+        海关监管车道 	0x10000000
+        避险车道引道 	0x20000000
+        停车道 	0x40000000
+        潮汐车道 	0x80000000
+        临时车道 	0x100000000
+        左转待转车道 	0x200000000
+        直行待行车道 	0x400000000
+        左侧加速车道	0x800000000
+        右侧加速车道	0x1000000000
+        左侧减速车道	0x2000000000
+        右侧减速车道	0x4000000000
+        服务区车道	0x8000000000
+        路缘带	0x10000000000
+        有轨（公交）车道	0x20000000000
+        公交车停靠车道	0x40000000000
+        环岛车道	0x80000000000
+        无效车道	0x100000000000
+        宽车道	0x200000000000
+        虚拟	0x400000000000
+        其他	0xffffffffffffffff
+    */
+    optional uint64 type = 5;//LaneType
+    
+    // enum LaneKind { //车道种别
+    //     UNKNOWN_LANEKIND = 0;//0-未调查 
+    //     DIRVEWAY = 1;//1-机动车道 
+    //     NON_DIRVEWAY = 2;//2-非机动车道 
+    //     MIXED_DIRVEWAY = 3;//3-机动车非机动车混合车道
+    // }
+    //optional int32 kind = 6;//LaneKind
+    
+    repeated LaneDirection directions = 7;
+
+    enum LanePriority {
+        LANE_PRIORITY_UNKNOWN = 0;
+        LANE_PRIORITY_HIGHER = 1;
+        LANE_PRIORITY_EQUAL = 2;
+        LANE_PRIORITY_LOWER = 3;
+        LANE_PRIORITY_CONTROLLED_BY_SIGNAL = 4;
+        LANE_PRIORITY_CONTROLLED_BY_STOPLINE = 5;
+    };
+    optional int32 priority = 8; // LanePriority   
+    optional float length = 9; //in meters 
+    optional int32 seq_no = 10; //车道所在车道组序号，从左往右开始记录，从1开始递增    
+    repeated FeatureID preds = 11;//根据通行方向前驱车道
+    repeated FeatureID succs = 12;//根据通行方向后继车道
+
+    enum LaneLineRestrictionType {
+        UNKNOWN_LINE_RESTRICTION_TYPE = 0;
+        BUS_LANE_LEFT_EDGE = 1;
+        BUS_LANE_RIGHT_EDGE = 2;
+        BIKE_LANE_LEFT_EDGE = 3;
+        BIKE_LANE_RIGHT_EDGE = 4;
+        OPPOSITE_NO_PASS = 5;
+        OPPOSITE_CAN_PASS = 6;
+        PEDESTRAIN_LANE_LEFT_EDGE = 7;
+        PEDESTRAIN_LANE_RIGHT_EDGE = 8;
+        WHITE_STRIP_ZONE_ON_LEFT = 9;
+        WHITE_STRIP_ZONE_ON_RIGHT = 10;
+        YELLOW_STRIP_ZONE_ON_LEFT = 11;
+        YELLOW_STRIP_ZONE_ON_RIGHT = 12;
+        CABLE_CAR_ON_LEFT = 13;
+        CABLE_CAR_ON_RIGHT = 14;
+        NO_CAR_ON_LEFT = 15;
+        NO_CAR_ON_RIGHT = 16;
+        EXIT_LANE_LEFT_EDGE = 17;
+        EXIT_LANE_RIGHT_EDGE = 18;
+        ENTRY_LANE_LEFT_EDGE = 19;
+        ENTRY_LANE_RIGHT_EDGE = 20;
+        HOV_LANE_LEFT_EDGE = 21;
+        HOV_LANE_RIGHT_EDGE = 22;
+        SIDEWALK_LEFT_EDGE = 23;
+        SIDEWALK_RIGHT_EDGE = 24;
+        PARKING_LANE_LEFT_EDGE = 25;
+        PARKING_LANE_RIGHT_EDGE = 26;
+        SHOULDER_LANE_LEFT_EDGE = 27;
+        SHOULDER_LANE_RIGHT_EDGE = 28;
+    };
+    repeated int32 l_restrictions = 13;
+    repeated int32 r_restrictions = 14;
+
+    enum LaneTransition {
+        LaneTransition_Unknown = 0;
+        LaneTransition_Continue = 1;
+        LaneTransition_Merging = 2;
+        LaneTransition_Splitting = 3;
+        LaneTransition_Other = 99;
+    };
+    optional int32 transition = 15;
+
+     enum TurnLimit { //转向方向
+        NONE = 0; // 无转向方向
+        STRAIGHT = 1; // 直行
+        SLIGHT_RIGHT = 2;//稍向右转
+        RIGHT = 4;//右转
+        HARD_RIGHT = 8;//向右急转
+        UTURN = 16;//掉头
+        HARD_LEFT = 32;//向左急转
+        LEFT = 64;//左转
+        SLIGHT_LEFT = 128;//稍向左转
+        NA = -1;//
+    }
+    optional int32 turn_limit = 16; //for type TurnLimit
+}
+
+message LaneGroup { // 车道组
+    optional FeatureID id = 1;
+    optional FeatureID link_id = 2;//Group所属道路
+    enum LaneGroupType {
+        UNKOWN_LANEGROUPTYPE = 0;//0-未确认
+        OTHERS = 1;//1-其他
+        // FIXED_LANE_NUM_AREA = 2;//2-车道数固定区域
+        // LANE_ADDED_FROM_LEFT_SIDE = 3;//3-车道数左侧增加区域
+        // LANE_ADDED_FROM_RIGHT_SIDE = 4;//4-车道数右侧增加区域
+        // LANES_ADDED_FROM_BOTH_SIDE = 5;//5-车道数左右侧增加区域
+        // LANE_REMOVED_FROM_LEFT_SIDE = 6;//6-车道数左侧减少区域
+        // LANE_REMOVED_FROM_RIGHT_SIDE = 7;//7-车道数右侧减少区域
+        // LANES_REMOVED_FROM_BOTH_SIDE=8;//8-车道数左右侧减少区域
+        // LANES_REMOVED_FROM_RIGHT_SIDE_ADDED_FROM_LEFT_SIDE = 9;//9-车道数左增右减区域
+        // LANES_REMOVED_FROM_LEFT_SIDE_ADDED_FROM_RIGHT_SIDE = 10;//10-车道数左减右增区域
+        // ENTERING_SPLIT_ROAD = 11; //11-分歧直行路口区间
+        // EXITING_MERGEING_AREA = 12;//12-合流直行路口区间
+        // RIGHT_LANE_EXIT = 13;//13-右侧分歧路口区间
+        // LEFT_LANE_EXIT = 14;//14-左侧分歧路口区间
+        // RIGHT_LANE_MERGE_IN = 15; //15-右侧合流路口区间
+        // LEFT_LANE_MERGE_IN = 16;//16-左侧合流路口区间
+        // LANES_FOR_STRAIGHT_AHEAD = 17;//17-交叉路口直行区间
+        // LANES_FOR_TURNING_RIGHT = 18;//18-交叉路口右转区间
+        // LANES_FOR_TURNING_LEFT = 19;//19-交叉路口左转区间
+        // LANES_FOR_U_TURN = 20;//20-交叉路口掉头区间
+        LANES_TO_TOLL = 21;//21-收费站驶入区间
+        LANES_AT_TOLL = 22;//22-收费站通道区间
+        EXITING_TOLL = 23;//23-收费站驶出区间
+        LANES_TO_BRIGHT = 24;//24-桥梁驶入区间-仅指跨河桥梁
+        LANES_ON_BRIGHT = 25;//25-桥梁通道区间-仅指跨河桥梁
+        EXITING_BRIGHT = 26;//26-桥梁驶出区间-仅指跨河桥梁
+        LANES_TO_TUNNEL = 27;//27-隧道驶入区间
+        LANES_IN_TUNNEL = 28;//28-隧道通道区间
+        EXITING_TUNNEL = 29;//29-隧道驶出区间
+        LANES_ON_JUNCTION = 30;//30-路口内的虚拟车道组
+    }
+    repeated int32 types = 4;//LaneGroupType
+    repeated FeatureID left_boundarys  = 6;//左侧边界类型
+    repeated FeatureID right_boundarys = 7;//右侧边界类型
+    repeated FeatureID lanes = 8;
+    repeated FeatureID preds = 9;
+    repeated FeatureID succs = 10;
+}
+
+//高精路口内不可通行区域
+//指物理上不可通行区域，像人行横道、自行车道等不在此列
+message ImpassableArea { // 不可通行区域
+    // enum Type {
+    //     UNKNOWN_IMPASSABLEAREA = 0;//0-未调查 
+    //     IMPASSABLEAREA = 1;//1-不可通行区域 
+    //     SUGGESTED_IMPASSABLEAREA = 2;//2-建议不通行区域
+    // }
+    enum Kind {
+        UNKNOWN_KIND = 0;//0-未调查 
+        FLOWERBED = 1;//1-花坛 
+        SENTRY_BOX = 2;//2-岗亭 
+        SAFE_ISLAND = 3;//3-安全岛
+        //待补充
+    }
+    optional Polygon geom = 1;
+    optional int32 type = 2; //Type 
+    optional int32 kind = 3; //Kind 
+}
+
+message Junction {
+    optional FeatureID id = 1;
+    optional FeatureID node_id = 3;  //关联的路口主点
+    repeated ImpassableArea areas = 5;  //高精路口内不可通行区域
+    repeated FeatureID boundarys = 6; //高精路口边界几何及其属性
+    repeated FeatureID conn_groups = 7; //内部连接的虚拟lane_group
+    repeated FeatureID in_groups = 8; //进入路口的lane_group
+    repeated FeatureID out_groups = 9; //退出路口的lane_group
+}

@@ -1,0 +1,14 @@
+output
+/**/build
+data/lidar_mapping_ws/
+.vscode/
+road_model/bev_road_model/modules/dao/data_debug_log/
+road_model/bev_road_model/modules/road_model/data_debug_log/
+road_model/bev_road_model/conf/data_debug_log/
+road_model/data_debug_log/
+road_model/road_model.log
+test_sh/
+**/bin
+**/*.pyc
+PL*_*
+other_scripts

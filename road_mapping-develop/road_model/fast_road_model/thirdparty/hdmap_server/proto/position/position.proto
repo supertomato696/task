@@ -1,0 +1,41 @@
+syntax = "proto2";
+
+package RoadPB;
+import "metadata/metadata.proto";
+import "common/common.proto";
+
+
+message PositionObject {
+    optional FeatureID id   = 1;
+    optional Polygon border = 2;
+    optional Circle circle = 3;
+    optional Polyline pole = 4; // 此处应该修改为polyline
+
+    enum ObjectType {
+        UNKNOWN = 0;//未确认
+        POLE = 1;//杆状物
+        SIGN = 2;//交通牌
+        //GANTRY = 3;
+        //OVERPASS = 4;
+        OVERHEAD = 5;//顶部遮挡物
+        TRAFFIC_LIGHT = 6;//交通灯
+        LANE_MARKING = 7;//地面标志
+        STOP_LINE = 8;//停止线
+        SPEED_BUMP = 9;//减速带
+        CROSS_WALK = 10;//斑马线
+        //BOARD = 11;
+        //PARKING_SLOT = 12;
+    }
+    optional int32 type = 5;  //ObjectType
+    optional string content = 6;
+    repeated FeatureID lane_groups = 7;  //所属LaneGroup
+    enum ObjectSubType 
+    {
+        UNKNOWN_SUBTYPE = 0; //未确认
+        SOLID = 1; //单实线
+        DOUBLE_SOLID = 2;//双实线
+        DASHED = 3;//单虚线
+        DOUBLE_DASHED = 4;//双虚线
+    }
+    optional int32 subtype = 8;
+}

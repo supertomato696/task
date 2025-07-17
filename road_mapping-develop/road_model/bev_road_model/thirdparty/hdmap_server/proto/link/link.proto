@@ -1,0 +1,104 @@
+syntax = "proto2";
+
+package RoadPB;
+
+import "metadata/metadata.proto";
+import "common/common.proto";
+
+/*message LinkTollInfo {
+    optional Polyline geom = 1;
+    optional int32  toll_type     = 2;  //1-高速 2-桥梁 3-隧道 4-轮渡
+    optional int32  fee_type      = 3;  //0-未调查 1-按里程收费 2-按次收费
+    optional double toll_standard = 4;  //fee_type = 1时，单位位“分/厘米”；fee_type = 2时，单位是“元/次”
+    optional string valid_period  = 5;
+    optional string vehicle_type  = 6;
+    optional double attribute_len = 7;
+}
+
+message TurnRestrict {
+    optional FeatureID node_id = 1;
+    optional FeatureID tolink_id = 2;
+    optional int32  type         = 3;  //0-未调查 1-加工交规 2-理论交规 3-通行方向隐含交规
+    optional int32  info         = 4;  //0-未调查 1-禁直 2-禁左 3-禁右 4-禁掉
+    optional int32  kind         = 5;  //0-未调查 1-禁止进入 2-时间段禁止（时间段内禁止 其他时间可通行）
+    optional string valid_period = 6;
+    optional string vehicle_type = 7;
+}
+
+message LinkGrade {
+    Polyline geom = 1;
+    int32 type      = 2;  // 0-未调查 1-上坡 2-下坡 3-水平
+    int32 angle     = 3;  // 单位度 值域[0-90]
+    int32 direction = 4;     // 基于link矢量化方向 0-未调查 1-双方向 2-顺方向 3-逆方向
+}
+message LinkGradeList {
+    repeated LinkGrade grades = 1;
+}
+message LinkZlevel {
+    Point geom = 1;
+    int32 group_num = 2;  // 针对同一立交关系位置点的多条link为一个group
+    int32 zlevel    = 3;  // 最底层为1 其他层顺序递增 包含地下对象
+}
+message LinkZlevelList {
+    repeated LinkZlevel zlevels = 1;
+} */
+
+message Link {
+    optional FeatureID id = 1;
+    optional FeatureID snode_id = 2;
+    optional FeatureID enode_id = 3;
+    optional int32 direction   = 4;  //0-未调查(unknown) [1-顺方向通行（forward） 2-逆方向通行(backward) 3-双方向通行（bidirection）]
+    optional int32 lane_count  = 5;  //0-未调查 [1]-单方向道路-只记录“总车道数” [2]-双方向道路-如果左右道路车道数一致，只记录“总车道数”，否则分则记录“左右车道数” 注-不包括应急车道、附加车道数量
+    optional int32 left_lanes  = 6;
+    optional int32 right_lanes = 7;
+    optional int32 multiply_digitized = 10;  //是否上下线分离 [0-未调查 1-否 2-是]
+
+    /* 0-未调查 1-无属性 2-交叉点内 LINK 3-掉头口 U-TURN 4-辅路 5-服务区道路(SA) 6-停车区道路(PA) 7-全封闭道路 
+        8-环岛 9-主辅路出入口 10-右转专用道 11-左转专用道 12-桥梁 13-隧道 14-高架路 15-公交专用道 16-POI 连接路
+        20-高速连接匝道 21-进高速匝道 22-出高速匝道 23-普通道路连接匝道 29-窄道路 30-区域内普通道路 31-索道 
+        32-滑道 33-石板路 34-回廊 35-索道桥 36-栈道 37-小火车 41-地下停车场出入口 42-地上停车场出入口 
+        43-停车场出入口虚拟连接路 50-未封闭环形道路 51-开合桥 52-借道左转 60-非机动车道（明确非机标识）61-骑行专用道路
+        62-步行专用道路(包含步行街) 63-人行绿道*/
+    optional int32 link_type = 11;  //道路类型
+
+    /* 0-未调查(unknown) 1-高速道路(freeway) 2-城市高速(express_way) 3-国道(national_highway) 4-省道（provincial_trunk_highway） 5-县道(county_road) 6-乡道(township_road) 7-村道(country_road) 8-其它道路(other_road) 9-特服道路 11-轮渡(ferry) 12-人渡 13-步行道路（sidewalk）*/
+    optional int32 road_class  = 12;  //link_kind 道路种别
+
+    optional int32 urban_flag = 13;  //if_urben 0-未调查 1-否 2-是
+    //optional int32 toll_area  = 14;  //0-未调查 1-否 2-是
+    //reserved 15;//int32 reversible_flag = 15;  //0-未调查 1-否 2-是
+    //reserved 16;//int32 theoretical_flag = 16;  //现实是否存在 0-未调查 1-否 2-是
+    optional double link_length   = 17;  //单位M 保留2位小数
+    //optional int32  open_status   = 18;  //开通状态 0-未调查 1-已开通 2-在建 3-规划中
+    //optional int32  state         = 19;  //数据状态 1-增 2-删 3-改
+    optional Polyline geom = 23;
+    //repeated LinkTollInfo tollinfos  = 29;
+    //LinkGradeList gradelist = 30;
+    //LinkZlevelList zlevellist = 31;
+    //repeated TurnRestrict turn_restricts = 32;
+    optional int32  road_grade = 40;  //道路等级 0-未调查 1-100-120KM/H 等国标 2-80-100KM/H 等国标 3-60-80KM/H 等国标 4-40-60KM/H 等国标 5-30-40KM/H 等国标 6-20-30KM/H 等国标 7-<20KM/H 等国标 8-设施内道路
+    optional int32  net_grade  = 41;  //网络层级 0-未调查 1-高层网络-远距离路径计算 2-中高网络-中远距离 3-干线网络-短距离 4-普通网络-短距离 5-低层网络 6-背景网络-不参与路径计算
+    //optional string open_time  = 42;  //时间域
+    //optional string valid_period = 43;
+    //optional string vehicle_type = 44;
+    repeated LangName names = 45;
+    optional ProvinceCode provincecode = 46;
+    optional int32 pavement_info = 47; //路面铺设信息 0-未调查 1-其他 2-水泥 3-金属 4-塑料 5-混合 6-沥青 7-橡胶 8-坑洼
+    optional int32 pass_type = 48; //道路通行对象 0-未调查 1-机动车 2-非机动车 3-机非混合
+    optional int32 grade = 49; //坡度 0-未调查 1-上坡 2-下坡 3-水平
+    
+    // 以下是高精信息
+    repeated FeatureID forward_groups = 50;
+    repeated FeatureID backward_groups = 51;
+}
+
+message Node {
+    optional FeatureID id  = 1;
+    optional Point geom     = 2;
+    //optional int32  node_type      = 3;//0-未调查 1-普通非路口结点 2-单一路口结点 3-路口主点 4-路口子点
+    //repeated int32  node_form      = 4[packed=true];//可多值 0-未调查 1-无属性 2-铁路道口 3-不可移动路障 4-检查站 5-大门点 6-收费站点
+    //optional int32  traffic_signal = 5;//0-未调查 1-否 2-是
+    //optional FeatureID parent_nodeid = 6;//路口子点所属于路口主点id
+    repeated FeatureID link_ids    = 7;//挂接的link
+    optional FeatureID junction_id = 8;//关联的高精路口
+}

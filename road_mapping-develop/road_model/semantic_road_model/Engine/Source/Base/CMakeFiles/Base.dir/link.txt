@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -std=gnu++11 -O3 -DNDEBUG  -shared -Wl,-soname,libProject_Base.so -o libProject_Base.so CMakeFiles/Base.dir/Base.cpp.o CMakeFiles/Base.dir/DateTime.cpp.o CMakeFiles/Base.dir/Point2D.cpp.o CMakeFiles/Base.dir/Point3D.cpp.o CMakeFiles/Base.dir/String.cpp.o CMakeFiles/Base.dir/TimeTracker.cpp.o CMakeFiles/Base.dir/dllmain.cpp.o -lsqlite3 

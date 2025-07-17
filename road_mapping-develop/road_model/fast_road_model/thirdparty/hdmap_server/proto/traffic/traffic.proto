@@ -1,0 +1,250 @@
+syntax = "proto2";
+
+package RoadPB;
+import "metadata/metadata.proto";
+import "common/common.proto";
+
+
+message TrafficCondition { // 交通限制（作用）信息
+    enum ConditionType { // 限制类型
+        NUMERIC = 0; //？
+        VEHICLE = 1; // 限制车种
+        LOAD = 2; // 限重？？？？？
+        TIME_OF_DAY = 3; //限制（作用）时间
+        WEATHER = 4; // 限制（作用）天气
+        FUZZY_TIME = 5; // 模糊限制（作用）时间
+        TURN_DIRECTION = 6; // 转向限制（作用）
+    }
+
+    optional int32 type = 1;
+    optional int32 value = 2; //for type NUMERIC
+    optional int32 vehicle_type_mask = 3; //for type VEHICLE
+
+    enum LoadType { //运载类型？ 制作要素来源和要素属性来源不清晰，无法翻译
+        WATER_POLLUTING = 1; //
+        EXPLOSIVE = 2; //
+        OTHER_DANGEROUS = 3;//
+        EMPTY = 4;//
+        SPECIAL = 5;//
+        GASSES = 6;//
+        FLAMMABLE_LIQUIDS = 7;
+        FLAMMABLE_SOLIDS = 8;
+        OXIDIZING = 9;
+        TOXIC_INFECTIOUS = 10;
+        RADIO_ACTIVE = 11;
+        CORROSIVE = 12;
+    }
+    optional int32 load_type = 4; //for type LOAD
+
+    optional int32 start_minues = 5; //for type TIME_OF_DAY
+    optional int32 end_minues = 6; //for type TIME_OF_DAY
+
+    enum Weather { //作用天气 
+        UNKNOWN  = 0; //未确认
+        NO_SPECIAL = 1; // 无作用天气
+        SUNSHINE = 2; //晴天
+        RAIN = 3; //雨天
+        FOG = 4; // 雾
+        SNOW = 5; //雪天
+        ICE = 6; //冰面？？
+        STRONG_WIND = 7; //强风
+    }
+    optional int32 weather = 7; //for type WEATHER
+
+    enum FuzzyTime {//模糊限制时间
+        TIME_UNKNOWN = 1; //限制时间未确认
+        TIME_DAY = 2; //白天
+        TIME_NIGHT = 3; //夜晚
+    }
+    optional int32 fuzzy_time = 8; //for type FUZZY_TIME
+
+    enum TurnDirection { //转向方向
+        NONE = 0; // 无转向方向
+        STRAIGHT = 1; // 直行
+        SLIGHT_RIGHT = 2;//稍向右转
+        RIGHT = 4;//右转
+        HARD_RIGHT = 8;//向右急转
+        UTURN = 16;//掉头
+        HARD_LEFT = 32;//向左急转
+        LEFT = 64;//左转
+        SLIGHT_LEFT = 128;//稍向左转
+        NA = -1;//？？？？？ 
+    }
+    optional int32 direction = 9; //for type TURN_DIRECTION
+}
+
+message TrafficSign {// 交通标志牌
+    enum SignType { //交通标志牌类型
+        UNKNOWN = 0;//未确认
+        STOP_FOR = 1; //停车让行
+        SLOW_FOR = 2; //减速慢行
+        GIVE_WAY = 3; //减速让行
+        NOWAY = 4; //禁止通行（空心圆）
+        NO_ENTRY = 5;//禁止驶入
+        NO_PARKING = 6;//禁止停车
+        NO_LONG_PARKING = 7;//禁止长时间停车
+        PARKING_CHECK = 8;//停车检查
+        NO_MOTOR = 9;//禁止机动车驶入
+        SPEED_LIMIT_HIGH = 10;//最高限速
+        SPEED_LIMIT_LOW = 11;//最低限速
+        SPEED_LIMIT_REMOVED = 12;//限速解除
+        CHILDREN_SCHOOLZONE = 13; //注意儿童学校区域
+        ROADWORKS = 14; //施工
+        OVERTAKINGPROHIBITED = 15; //禁止超车
+        ENDOFPROHIBITIONONOVERTAKING = 16; //解除禁止超车
+        ENDOFHIGHWAY = 17; //高速公路终点
+        STARTOFHIGHWAY = 18; //高速公路起点
+        LEFTCURVE = 19; //向左急转弯
+        RIGHTCURVE = 20;//向右急转弯
+        SERIESCURVES = 21;//连续转弯
+    }
+
+    enum Shape { //交通标志牌形状
+        UNKNOWN_SHAPE    = 0;  //未确认
+        RECTANGLE        = 1;  //矩形
+        TRIANGLE         = 2;  //三角
+        CIRCLE           = 3;  //圆形
+        DIAMOND          = 4;  //菱形
+        HEXAGON          = 5;  //六边形
+        OCTAGON          = 6;  //八角形
+        FURCATION        = 7;  //叉型
+        COMBINATION      = 8; //组合牌？？
+        OTHER_SHAPE      = 99;  //其他形状
+    }
+
+    // enum Color { //交通标志牌颜色
+    //     UNKNOWN_COLOR = 0; //未确认
+    //     OTHER_COLOR   = 1; // 其他
+    //     WHITE         = 2; //白色
+    //     YELLOW        = 3; //黄色
+    //     RED           = 4; //红色
+    //     GREEN         = 5; //绿色
+    //     BLUE          = 6; //蓝色
+    //     BLACK         = 7; //黑色
+    //     BROWN         = 8; //棕色
+    //     COLORFUL      = 9; //彩色
+    // }
+
+    optional int32 type = 3;  //SignType
+    optional int32 shape = 4; //Shape
+    //optional int32 color = 5; //Color
+    optional float value = 6;
+    optional string content = 7;
+    optional bool variable = 8;
+    repeated TrafficCondition panels = 9;
+}
+
+message TrafficLight { // 交通灯
+    enum LightType { // 交通灯显示类型
+        NONE = 0; // 未确认
+        ROUND = 1; // 圆形 
+        CROSS = 2; //叉型
+        PEDESTRIAN = 3;//行人
+        BICYCLE = 4;//自行车
+        ARROW = 5;//箭头
+        TIME = 6;//倒计时
+    }
+
+    // enum BulbColor { //灯头颜色？？？？ 应该如何落地？
+    //     UNKNOWN = 0;//未确认
+    //     RED = 1;//红色
+    //     YELLOW = 2;//黄色
+    //     GREEN = 3;//绿色
+    //     WHITE = 4;//白色
+    // }
+
+    // enum BulbShape {//交通灯图案（与交通灯显示类型是否可以合并？？）
+    //     UNKNOWN_SHARP = 0; //未确认
+    //     CIRCLE = 1;//圆形
+    //     LEFT_ARROW = 2;//左转方向箭头
+    //     RIGHT_ARROW = 3;//右转方向箭头
+    //     UP_ARROW = 4;//直行方向箭头
+    //     //DOWN_ARROW = 5;//？？？？？？
+    //     UTURN = 6;//掉头方向箭头
+    //     FORWARD_AND_LEFT = 7;//直行和左转方向箭头
+    //     FORWARD_AND_RIGHT = 8;//直行和右转方向箭头
+    // }
+
+    // message LightBulb {
+    //     optional int32 color = 1; //BulbColor
+    //     optional int32 shape = 2; //BuldShape
+    //     optional Circle border = 3;
+    // }
+
+    optional int32 type = 1; //LightType
+   // repeated LightBulb bulbs = 2;
+    optional int32 arrange = 4;  //交通灯组排列方向  0-未调查（unknow_arrange） 1-水平(horizontal) 2-垂直(vertical) 3-点(single)
+   // optional int32 usage_obj  = 8;  //应用对象 0-未调查(unknow_usage) 1-机动车(motor_vehicle) 2-非机动车(non_motor_vehicle) 3-行人(pedestrian) 4-骑行（bicycle） 5-混合（all）
+    /*0-路口红绿灯（for_junction） 1-reversed  2-收费站指示灯(for_toll) 3-穿越人行道(for_pedestrian) 4-穿越自行车道(for_bicycle) 5-隧道指示灯(for_tunnel) 
+      6-桥梁指示灯(for_bridge) 7-车道控制灯(for_lane_control)  8-铁道穿越指示灯(for_railway_control) 9-警示灯(for_warning)*/
+  //  optional int32 usage_type = 9;
+    optional int32 bulbs_num = 10;
+}
+
+//同方向TrafficLight并且有协作关系时组合成为TrafficLightGroup
+//message TrafficLightGroup {
+//    repeated FeatureID lights = 2;
+//}
+
+message LaneMarking {   //地面标志 
+    enum MarkingType {
+        ARROW_UNKNOWN = 0; // 未确认箭头类型
+        ARROW_LEFT = 1; //左转
+        ARROW_FORWARD = 2; //直行
+        ARROW_RIGHT = 3; //右转
+        ARROW_LEFT_AND_FORWARD = 4; //左转或直行
+        ARROW_RIGHT_AND_FORWARD = 5; //右转或直行
+        ARROW_LEFT_AND_RIGHT = 6; //左转或右转
+        ARROW_U_TURN = 7; //掉头
+        ARROW_U_TURN_AND_FORWARD = 8; //掉头或直行
+        ARROW_U_TURN_AND_LEFT = 9; //掉头或左转
+        ARROW_MERGE_LEFT = 10; //向左合流
+        ARROW_MERGE_RIGHT = 11; //向右合流
+        CROSSWALK_NOTICE = 12; //注意行人 
+        SPEED_LIMIT_LOW = 13; //最低限速
+        SPEED_LIMIT_HIGH = 14; //最高限速
+        ARROW_NO_LEFT_TURN = 15; //禁止左转
+        ARROW_NO_RIGHT_TURN = 16; //禁止右转
+        ARROW_NO_U_TURN = 17; //禁止掉头
+        ARROW_FORWARD_AND_LEFT_AND_RIGHT = 18; //左转或直行或右转
+        ARROW_FORWARD_AND_U_TURN_AND_LEFT = 19; //掉头或左转或直行
+        ARROW_RIGHT_AND_U_TURN = 20; //右转或掉头
+        MARKING_TEXT = 21; //文字
+        MARKING_TIME = 22; //时间
+        CHECK_FOLLOWING_DISTANCE = 23;//车距确认线
+        STOPTO_GIVE_WAY = 24; //？？？？ 停车让行线还是停车文字？
+        SLOWDOWN_TO_GIVE_WAY = 25;// 减速让行线还是限速让行三角标志
+        // MARKING_STOP = 26; //??? 停止线？
+        MARKING_NETS = 27; //网状线
+    }
+    optional int32 type = 1;//MarkingType
+    optional float value = 6;
+    optional string content = 7;
+}
+
+message SpeedBump { //减速防滑带
+    optional float height = 1; //高度
+    //optional float speed_limit = 2;
+}
+
+message TrafficInfo {
+    optional FeatureID id = 1;
+    repeated FeatureID objs = 2;
+
+    enum InfoType {
+        SIGN = 1;
+        LIGHT = 2;
+        //LIGHT_GROUP = 3;
+        LANE_MARK = 4;
+        SPEED_BUMP = 5;
+    }
+    optional int32 type = 3;//InfoType
+    optional FeatureID lanes = 4;
+    optional FeatureID lanegroups = 5;
+
+    optional TrafficSign sign = 6;
+    optional TrafficLight light = 7;
+    //optional TrafficLightGroup light_group = 8;
+    optional LaneMarking marking = 9;
+    optional SpeedBump bump = 10;
+}

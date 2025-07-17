@@ -1,0 +1,105 @@
+syntax = "proto2";
+
+package services;
+
+import "metadata/metadata.proto";
+option cc_generic_services = true;
+
+
+message RoadServiceResponse {
+  optional int32 code = 1;
+  optional string message = 2;
+};
+
+message RoadFeature {
+  optional RoadPB.FeatureID id = 1;
+  optional bytes data = 2;
+};
+
+message TileFeatureList {
+  optional int32 type = 1;
+  repeated RoadFeature feats = 2;
+  repeated RoadPB.FeatureID refs = 3;
+};
+
+message TileInfo {
+  optional int32 tile_id = 1;
+  optional int64 version = 2 [default = 0, jstype=JS_STRING];
+  optional string last_editor = 3;
+  repeated TileFeatureList feat_list = 4;
+};
+
+message TileUploadRequest {
+  optional string editor = 1;
+  repeated TileInfo tile = 2;
+  optional string branch = 3;
+  optional string committer = 4;
+  optional bool allow_conflict = 7 [default = false];
+  optional bool elem_merge = 8;
+};
+
+message TileUploadResponse {
+  repeated TileInfo tile = 1;
+  optional int64 read_ver = 4 [jstype=JS_STRING];
+  optional string branch = 5;
+  optional RoadServiceResponse ret = 6;
+};
+
+message TileDownloadRequest {
+  repeated int32 tile_id = 1;
+  optional string editor = 2;
+  optional int64 request_version = 3 [jstype=JS_STRING];
+  repeated int32 need_type = 4;
+  optional string branch = 5;
+  optional bool load_ref = 6;
+};
+
+message TileDownloadResponse {
+  repeated TileInfo tile_info = 3;
+  optional int64 editor_version = 5 [jstype=JS_STRING];
+  optional string branch = 6;
+  optional RoadServiceResponse ret = 8;
+};
+
+message TileMergeRequest {
+  repeated int32 tile_id = 1;
+  optional string editor = 2;
+  optional int64 request_version = 3 [jstype=JS_STRING];
+  repeated int32 need_type = 4;
+  optional string src_branch = 5;
+  optional string dst_branch = 6;
+  optional bool editable_only = 7;
+  optional int64 src_version = 8;
+  optional bool allow_conflict = 9 [default = true];
+};
+
+message TileMergeResponse {
+  repeated TileInfo tile_info = 3;
+  optional int64 editor_version = 5 [jstype=JS_STRING];
+  optional string dst_branch = 6;
+  optional RoadServiceResponse ret = 8;
+};
+
+message TileRevertRequest {
+  repeated int32 tile_id = 1;
+  optional string editor = 2;
+  optional int64 request_version = 3 [jstype=JS_STRING];
+  repeated int32 need_type = 4;
+  optional string branch = 5;
+  optional bool editable_only = 6;
+};
+
+message TileRevertResponse {
+  repeated TileInfo tile_info = 3;
+  optional int64 editor_version = 5 [jstype=JS_STRING];
+  optional string branch = 6;
+  optional int64 request_version = 7 [jstype=JS_STRING];
+  optional RoadServiceResponse ret = 8;
+};
+
+service RoadService {
+  rpc UploadTile(TileUploadRequest) returns (TileUploadResponse);
+  rpc DownloadTile(TileDownloadRequest) returns (TileDownloadResponse);
+  rpc MergeTile(TileMergeRequest) returns (TileMergeResponse);
+  rpc RevertTile(TileRevertRequest) returns (TileRevertResponse);
+};

@@ -1,0 +1,128 @@
+﻿namespace HadmapFBS;
+
+struct TileGridPoint {
+    x:float;
+    y:float;
+    z:float;
+    intensity:ubyte;
+    r_or_low:ubyte;
+    g_or_middle:ubyte;
+    b_or_high:ubyte;
+    type:short;
+    distance:short;
+    frame_id:long;
+    timestamp:double;
+}
+
+table ElementID {
+    tile_id:int;
+    index:ulong;
+    type:ubyte;
+    version:long;
+}
+
+table CellElement {
+    center_x:float;
+    length_x:float;
+    center_y:float;
+    length_y:float;
+    center_z:float;
+    length_z:float;
+    type:uint;
+    subtype:uint;
+    elem_id:ElementID;
+    pros:float;
+    cons:float;
+    heading_x:float;
+    heading_y:float;
+    heading_z:float;
+    heading_w:float;
+}
+
+table GridCell {
+    x_index:int;
+    y_index:int;
+    zmin:float;
+    zmax:float;
+    type:uint;
+    points:[TileGridPoint];
+    cell_ends:[int];
+    elem_index:[int];
+    cell_zmin:[float];
+    cell_zmax:[float];
+    cell_occupy_mask:[ulong];
+    cell_intensity:[ulong];
+    cell_color_r:[ulong];
+    cell_color_g:[ulong];
+    cell_color_b:[ulong];
+    cell_masks:[ulong];
+    valid_time:ulong;
+    changed:bool;
+}
+
+table HyperCell {
+    row:int;
+    col:int;
+    gnd:float;
+    coeff0:float;
+    coeff1:float;
+    coeff2:float;
+    coeff3:float;
+}
+
+table GridNode {
+    x_off:int;
+    y_off:int;
+    zmin:float;
+    zmax:float;
+    cells:[GridCell];
+    x_range:int;
+    y_range:int;
+    grid:[HyperCell];
+    elems:[CellElement];
+    index:uint;
+    valid_time:ulong;
+    changed:bool;
+}
+
+struct Point3D {
+    x:double;
+    y:double;
+    z:double;
+}
+
+table LaneLine3D {
+    color:int;
+    confidence:float;
+    width:float;
+    length:float;
+    type:int;
+    lane2d_id:long;
+    trail_id:int;
+    eye_pos:Point3D;
+    points:[Point3D];
+    pro_ind:int;
+    thresh:short;
+    mean:short;
+}
+
+table TileGrid {
+    tile_id:uint;
+    version:ulong;
+    nodes:[GridNode];
+    x_range:int;
+    y_range:int;
+    x_center:double;
+    y_center:double;
+    x_min_offs:[int];
+    y_min_offs:[int];
+    x_max_offs:[int];
+    y_max_offs:[int];
+    lane3ds:[LaneLine3D];
+    traffics:[LaneLine3D];
+    nodes_path:[string];
+    valid_time:ulong;
+    changed:bool;
+}
+
+root_type TileGrid;

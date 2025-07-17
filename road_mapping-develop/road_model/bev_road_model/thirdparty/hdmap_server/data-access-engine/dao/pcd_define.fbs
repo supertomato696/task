@@ -1,0 +1,46 @@
+﻿namespace HadmapFBS;
+
+struct PointXYZIRGB {
+  x:float;
+  y:float;
+  z:float;
+  intensity:ubyte;
+  r:ubyte;
+  g:ubyte;
+  b:ubyte;
+}
+
+struct Vec3f {
+  x:float;
+  y:float;
+  z:float;
+}
+
+struct Quaternionf {
+  x:float;
+  y:float;
+  z:float;
+  w:float;
+}
+
+table PCLHeader {
+  seq:uint;
+  stamp:ulong;
+  frame_id:string;
+}
+
+enum PointType : ubyte { XYZIRGB=1, XYZIRGB_Frame=129 }
+
+table PointCloud {
+  header:PCLHeader;
+  width:uint;
+  height:uint;
+  is_dense:bool;
+  sensor_origin:Vec3f;
+  sensor_orientation:Quaternionf;
+  point_type:PointType = XYZIRGB_Frame;
+  points_xyzirgb:[PointXYZIRGB];
+  points_mask:[uint]; 
+}
+
+root_type PointCloud;
